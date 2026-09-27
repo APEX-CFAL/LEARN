@@ -18005,23 +18005,35 @@ ${(s.chapters && s.chapters.length)
         function toggleDarkMode(e) {
             const isDark = !document.body.classList.contains('dark-mode');
             const clickedEl = (e && e.currentTarget) || (e && e.target);
+            // v110: capture the real tap/click point up front, while the event is still fresh —
+            // by the time runToggle() fires (possibly after awaiting a sidebar animation below),
+            // e.clientX/clientY are still valid (primitives, not references), so this is safe.
+            const pointerX = e && typeof e.clientX === 'number' ? e.clientX : null;
+            const pointerY = e && typeof e.clientY === 'number' ? e.clientY : null;
+            const hasRealPointer = pointerX !== null && pointerY !== null && (pointerX !== 0 || pointerY !== 0);
 
             function runToggle() {
-                // ── Find the clicked button — check sidebar toggle, then onboarding button ──
-                // v109: the ripple used to trust whichever candidate came first even if it turned out
-                // to be display:none (e.g. the sidebar's own toggle is hidden at some collapsed-sidebar
-                // widths) — getBoundingClientRect() on a non-rendered element is all zeros, so the
-                // ripple silently opened from the page's top-left corner instead of the button. Now
-                // every candidate is checked for a real (non-zero) box before it's trusted, and only
-                // the visible one anchors the ripple.
+                // ── Anchor the ripple exactly where the finger/cursor was ──
+                // v110: measuring the button's own box (getBoundingClientRect) was fragile — a
+                // stale rect, a mid-animation sidebar, or an unexpected duplicate element could all
+                // silently mis-anchor the ripple. The click/tap event's own clientX/clientY is
+                // always exactly right, with nothing to measure or get wrong, so it's now the
+                // primary source. The old "find the visible candidate button" logic (v109) is kept
+                // only as a fallback for non-pointer activation (e.g. keyboard Enter/Space), where
+                // clientX/clientY are 0,0 and meaningless.
                 let originX = '50%';
                 let originY = '50%';
-                const candidates = [clickedEl, document.getElementById('darkModeToggle'), document.querySelector('.onboarding-dark-btn')];
-                const toggle = candidates.find(el => el && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0);
-                if (toggle) {
-                    const rect = toggle.getBoundingClientRect();
-                    originX = (rect.left + rect.width / 2) + 'px';
-                    originY = (rect.top + rect.height / 2) + 'px';
+                if (hasRealPointer) {
+                    originX = pointerX + 'px';
+                    originY = pointerY + 'px';
+                } else {
+                    const candidates = [clickedEl, document.getElementById('darkModeToggle'), document.querySelector('.onboarding-dark-btn')];
+                    const toggle = candidates.find(el => el && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0);
+                    if (toggle) {
+                        const rect = toggle.getBoundingClientRect();
+                        originX = (rect.left + rect.width / 2) + 'px';
+                        originY = (rect.top + rect.height / 2) + 'px';
+                    }
                 }
 
                 function applyChange() {
@@ -18043,7 +18055,26 @@ ${(s.chapters && s.chapters.length)
                 if (document.startViewTransition) {
                     document.startViewTransition(applyChange);
                 } else {
-                    applyChange();
+                    // v110: Safari/Firefox have no View Transition API, so this used to just flip
+                    // instantly with zero animation — no ripple, no anchor, nothing. This fakes the
+                    // same button-anchored reveal with a plain element: a growing transparent hole
+                    // (the veil itself) surrounded by a huge box-shadow painted in the OLD theme's
+                    // color, so the real (already-switched) page shows through as the hole expands
+                    // from the exact tap point.
+                    const oldBg = getComputedStyle(document.body).backgroundColor;
+                    const ox = parseFloat(originX), oy = parseFloat(originY);
+                    const veil = document.createElement('div');
+                    veil.className = 'apx-dm-veil';
+                    veil.style.cssText = 'position:fixed;top:' + oy + 'px;left:' + ox + 'px;width:0;height:0;' +
+                        'transform:translate(-50%,-50%);border-radius:50%;background:transparent;' +
+                        'box-shadow:0 0 0 9999px ' + oldBg + ';pointer-events:none;z-index:2147483647;' +
+                        'transition:width .6s ease-out,height .6s ease-out;';
+                    document.body.appendChild(veil);
+                    applyChange(); // flip the real theme now — instantly hidden behind the veil
+                    veil.getBoundingClientRect(); // force layout so the transition below actually animates
+                    const maxSize = Math.hypot(window.innerWidth, window.innerHeight) * 2.2;
+                    requestAnimationFrame(() => { veil.style.width = maxSize + 'px'; veil.style.height = maxSize + 'px'; });
+                    veil.addEventListener('transitionend', () => veil.remove(), { once: true });
                 }
             }
 

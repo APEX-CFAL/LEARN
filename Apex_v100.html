@@ -13919,7 +13919,12 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                     });
                     if (!res.ok) {
                         const err = await res.text();
-                        const retryAfter = parseFloat(res.headers.get('retry-after')) || 0;
+                        // Groq puts the actual suggested wait inside the error text itself
+                        // ("...Please try again in 8.66s"), not a Retry-After header — same fix as
+                        // the ai-logic engine's once().
+                        const headerWait = parseFloat(res.headers.get('retry-after')) || 0;
+                        const bodyMatch = err.match(/try again in ([\d.]+)s/i);
+                        const retryAfter = headerWait || (bodyMatch ? parseFloat(bodyMatch[1]) : 0);
                         console.error('[Groq] Error ' + res.status + ':', err);
                         throw { status: res.status, body: err, retryAfter };
                     }
@@ -13931,15 +13936,20 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                     return await doCall(primaryKey);
                 } catch(e) {
                     // Rate limited / overloaded: wait the time Groq asks for, then try the backup key.
+                    // v114: a 429 here is an ORGANIZATION-wide per-minute token limit (Groq's own
+                    // error names the org, not the key), so it needs real time to clear — the old
+                    // 8s cap (with only a 2-3s fallback when retryAfter was missing, which it
+                    // usually is — see the once()/doCall() fix above for why) just retried straight
+                    // back into the same still-active window on both keys.
                     if (e.status === 429 || e.status === 413 || e.status >= 500) {
-                        const waitMs = Math.min((e.retryAfter || 2) * 1000, 8000);
+                        const waitMs = Math.min((e.retryAfter || (e.status === 429 ? 15 : 2)) * 1000, 65000);
                         console.log('[Groq] Primary hit ' + e.status + ', waiting ' + waitMs + 'ms then trying backup...');
                         await _groqSleep(waitMs);
                         if (backupKey) {
                             try { return await doCall(backupKey); }
                             catch(e2) {
                                 if (e2.status === 429 || e2.status >= 500) {
-                                    await _groqSleep(Math.min((e2.retryAfter || 3) * 1000, 8000));
+                                    await _groqSleep(Math.min((e2.retryAfter || (e2.status === 429 ? 15 : 3)) * 1000, 65000));
                                     return await doCall(primaryKey); // one last retry on primary
                                 }
                                 throw new Error('Groq API error: ' + (e2.status || '') + ' ' + (e2.body || e2.message || '').substring(0, 150));
@@ -28125,13 +28135,23 @@ Return ONLY JSON:
                     const key = s.name + '::ch' + i;
                     const phases = pc[key] || {};
                     const doneP = Object.keys(phases).filter(p => phases[p] && phases[p].done);
+                    // v115: this used to emit a line for EVERY chapter in EVERY subject
+                    // unconditionally — for a student with several subjects times 20-25 chapters
+                    // each, that's 80-100+ lines, most of them "PENDING=[everything]" for a chapter
+                    // nothing has happened on yet. That's exactly the info chapterProgress/
+                    // chapterLogText already cover more compactly, and it was a genuinely
+                    // unbounded contributor to the same per-minute token limit the syllabus block
+                    // was cut for — skip a chapter entirely once it has zero completed phases.
+                    if (!doneP.length) return;
                     const pendP = ['notes','revision','practice','brush','pastpapers'].filter(p => !doneP.includes(p));
                     const chName = ch.split('.')[0]?.trim() || ('Ch'+(i+1));
-                    lines.push('  ' + chName + ': DONE=[' + (doneP.join(',') || 'none') + '] PENDING=[' + pendP.join(',') + ']');
+                    lines.push('  ' + chName + ': DONE=[' + doneP.join(',') + '] PENDING=[' + pendP.join(',') + ']');
                 });
                 if (lines.length) summary += '\n' + s.name + ':\n' + lines.join('\n');
             });
-            return summary || 'No completion data yet.';
+            if (!summary) return 'No completion data yet.';
+            // Safety cap, same reasoning as chapterLogText — this still scales with total usage.
+            return summary.length > 2500 ? summary.slice(0, 2500) + '\n...' : summary;
         }
         function getPointsSummary() {
             const pc = getPhaseCompletion();

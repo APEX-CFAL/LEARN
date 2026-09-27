@@ -1792,6 +1792,20 @@
             overflow-y: auto;
         }
 
+        /* Reading a notes topic's actual content borrows the standalone Apex Notes app's
+           edge-to-edge layout — sidebar hidden, wide reading column — since that's what people
+           are there to read, not navigate from. The page's own Back/breadcrumb links still work
+           to leave, which turns notes-reading-mode back off (see showNotesView). */
+        body.notes-reading-mode .sidebar { display: none !important; }
+        body.notes-reading-mode .main-content { margin-left: 0 !important; }
+        body.notes-reading-mode #section-notes .content-container { max-width: 1100px; }
+        /* The topic title was inheriting the app's generic h1{text-align:center} (meant for the
+           Welcome screen) and sitting at 26px — the standalone Notes app's own title is a
+           left-aligned ~50px. Scoped to reading mode so the chapter-overview page (which shares
+           .apx-intro for its own, differently-sized heading) is untouched. */
+        body.notes-reading-mode .apx-intro h1 { text-align: left; font-size: 2.75rem; margin-bottom: 20px; }
+        body.notes-reading-mode .apx-intro .eyebrow { font-size: 14px; margin-bottom: 14px; }
+
         .main-content.sidebar-open {
             /* Will be overridden by media queries */
         }
@@ -11064,8 +11078,16 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                 return;
             }
             hostEl.innerHTML = '';
+            hostEl.classList.toggle('dark', document.body.classList.contains('dark-mode'));
             const shadow = hostEl.attachShadow({ mode: 'open' });
             shadow.innerHTML = `<style>${window.APEX_NOTES_CSS}</style><div class="apx-notes-root">${contentHtml}</div>`;
+        }
+
+        // Keeps any already-mounted notes content in sync when dark mode is toggled while a
+        // topic page is open, instead of only picking up the mode on the next navigation.
+        function apexSyncNotesDarkMode() {
+            const isDark = document.body.classList.contains('dark-mode');
+            document.querySelectorAll('.apx-notes-mount').forEach(el => el.classList.toggle('dark', isDark));
         }
 
         // ════════════════════════════════════════════════════════════════════════
@@ -18047,6 +18069,7 @@ ${(s.chapters && s.chapters.length)
                     setTimeout(refreshOnboardingStyles, 50);
                     if (typeof refreshAssessmentColorsForTheme === 'function') refreshAssessmentColorsForTheme();
                     if (typeof applyCustomTheme === 'function') applyCustomTheme();
+                    if (typeof apexSyncNotesDarkMode === 'function') apexSyncNotesDarkMode();
                 }
 
                 // Use View Transition API if supported (Chrome 111+, Edge)
@@ -21870,6 +21893,11 @@ Return ONLY JSON:
             });
             const target = document.getElementById('notesView' + view.charAt(0).toUpperCase() + view.slice(1));
             if (target) target.style.display = 'block';
+            // Reading a topic's actual notes wants the width the standalone Notes app has —
+            // this is the one navigation function every notes view (subjects/chapters/detail/
+            // topic) passes through, so it's the single place to flip a wide, sidebar-free
+            // "reading mode" on for the topic page and back off for every other view.
+            document.body.classList.toggle('notes-reading-mode', view === 'topic');
         }
 
         function updateNotesBreadcrumb() {
@@ -22152,8 +22180,11 @@ Return ONLY JSON:
                 }
             }
 
+            // No back-to-chapter link here — the breadcrumb right above this page already has a
+            // clickable chapter link doing the exact same thing, and reading mode (see
+            // showNotesView) drops the sidebar specifically to give the topic more room, so a
+            // second, redundant nav line would work against that.
             container.innerHTML = `<div class="apx-intro">
-                    <button class="apx-back" onclick="notesSelectChapter(notesState.currentChapterIdx)">← Back to ${chName}</button>
                     <div class="eyebrow">Topic</div>
                     <h1>${topic.name}</h1>
                 </div>` + bodyHtml;

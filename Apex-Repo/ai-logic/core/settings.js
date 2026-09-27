@@ -5,7 +5,9 @@ export const SETTINGS = {
   endpoint: 'https://api.groq.com/openai/v1/chat/completions',
   temperature: 0.4,     // per-feature override: add `temperature` to a feature's def()
   minGapMs: 1100,       // spacing between calls (avoids free-tier 429 bursts)
-  maxWaitMs: 8000,      // longest we ever sleep on a Retry-After
+  maxWaitMs: 65000,     // longest we ever sleep on a Retry-After — was 8000, too short to clear a
+                        // real per-minute token-budget 429 (a 60s rolling window), which just
+                        // retried straight back into the same still-active limit
   extraRetries: 1       // attempts beyond one-per-key. The app today only does this for chapter notes;
                         // here EVERY feature gets it (and a single-key user gets a 2nd attempt).
 };

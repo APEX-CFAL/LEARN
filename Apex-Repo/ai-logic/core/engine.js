@@ -53,7 +53,13 @@ async function attempt(keys, messages, maxTokens, temperature, tools) {
     catch (e) {
       last = e;
       if (!retryable(e) || i === tries - 1) break;
-      await deps.sleep(Math.min((e.retryAfter || (i === 0 ? 2 : 3)) * 1000, SETTINGS.maxWaitMs));
+      // A 429 here means the account's whole per-minute token budget is spent, not a quick
+      // hiccup — the old 2-3s default (meant for a transient 502/503) just retried straight back
+      // into the same still-active window, producing the exact 429-after-429 cascade seen in
+      // real usage. Groq's own Retry-After header is trusted first regardless; this only changes
+      // the guess when it's missing.
+      const fallbackWaitS = e.status === 429 ? 15 : (i === 0 ? 2 : 3);
+      await deps.sleep(Math.min((e.retryAfter || fallbackWaitS) * 1000, SETTINGS.maxWaitMs));
     }
   }
   throw fail('API_ERROR', 'Groq API error: ' + ((last && (last.status || '')) + ' ' + ((last && (last.body || last.message)) || '')).trim().slice(0, 170));
@@ -103,8 +109,7 @@ export function preview(id, ctx) {
   return { id, program: x.p.id, tokens: x.tokens, system: x.system, user: x.user };
 }
 
-export async function run(id, ctx) {
-  const x = prepare(id, ctx);
+async function attemptRun(x) {
   let messages = x.system ? [{ role: 'system', content: x.system }, { role: 'user', content: x.user }] : [{ role: 'user', content: x.user }];
   let message = await callTurn(messages, x.tokens, x.f.temperature, x.f.tools);
 
@@ -135,5 +140,23 @@ export async function run(id, ctx) {
     data = (deps.parseJson || builtinParseJson)(raw);
     if (x.f.validate) data = x.f.validate(data, x.c, warnings);
   }
-  return { id, data, raw, warnings };
+  return { id: x.id, data, raw, warnings };
+}
+
+export async function run(id, ctx) {
+  const x = prepare(id, ctx);
+  x.id = id;
+  // A reply that comes back 200 OK but isn't usable — no JSON object at all, or one that fails
+  // the feature's own validate() (e.g. "no sessions") — is usually a one-off model slip, not a
+  // sign the request itself is broken; retryable() above only covers network/429/5xx for the raw
+  // HTTP call, so this is the equivalent one extra try for a bad-content response, before it
+  // reaches the caller as a real failure.
+  try {
+    return await attemptRun(x);
+  } catch (e) {
+    if (e && (e.code === 'BAD_JSON' || e.code === 'INVALID')) {
+      return await attemptRun(x);
+    }
+    throw e;
+  }
 }

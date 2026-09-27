@@ -28135,13 +28135,23 @@ Return ONLY JSON:
                     const key = s.name + '::ch' + i;
                     const phases = pc[key] || {};
                     const doneP = Object.keys(phases).filter(p => phases[p] && phases[p].done);
+                    // v115: this used to emit a line for EVERY chapter in EVERY subject
+                    // unconditionally — for a student with several subjects times 20-25 chapters
+                    // each, that's 80-100+ lines, most of them "PENDING=[everything]" for a chapter
+                    // nothing has happened on yet. That's exactly the info chapterProgress/
+                    // chapterLogText already cover more compactly, and it was a genuinely
+                    // unbounded contributor to the same per-minute token limit the syllabus block
+                    // was cut for — skip a chapter entirely once it has zero completed phases.
+                    if (!doneP.length) return;
                     const pendP = ['notes','revision','practice','brush','pastpapers'].filter(p => !doneP.includes(p));
                     const chName = ch.split('.')[0]?.trim() || ('Ch'+(i+1));
-                    lines.push('  ' + chName + ': DONE=[' + (doneP.join(',') || 'none') + '] PENDING=[' + pendP.join(',') + ']');
+                    lines.push('  ' + chName + ': DONE=[' + doneP.join(',') + '] PENDING=[' + pendP.join(',') + ']');
                 });
                 if (lines.length) summary += '\n' + s.name + ':\n' + lines.join('\n');
             });
-            return summary || 'No completion data yet.';
+            if (!summary) return 'No completion data yet.';
+            // Safety cap, same reasoning as chapterLogText — this still scales with total usage.
+            return summary.length > 2500 ? summary.slice(0, 2500) + '\n...' : summary;
         }
         function getPointsSummary() {
             const pc = getPhaseCompletion();

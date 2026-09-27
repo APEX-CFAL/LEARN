@@ -15083,7 +15083,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                     if (typeof jeeNeetSyllabusData === 'undefined') return 'Rich syllabus data not loaded.';
                     const blocks = [];
                     studentData.subjects.forEach(s => {
-                        const topics = [...apexGetSyllabusTopicDetails(s.name)].sort((a,b)=>b.priority-a.priority).slice(0, 12);
+                        const topics = [...apexGetSyllabusTopicDetails(s.name)].sort((a,b)=>b.priority-a.priority).slice(0, 8);
                         const topicLines = topics.map(t => `  • ${t.chapter} [priority ${t.priority}/5]${t.examRelevance ? ' [' + t.examRelevance + ']' : ''}`).join('\n');
                         const rich = jeeNeetSyllabusData[s.name];
                         blocks.push(`▼ ${s.name} (${apexGetSubjectTierLabel(s)}, ${(rich && rich.version) || ''})\nHIGH-PRIORITY CHAPTERS (use chapter NAMES exactly as written):\n${topicLines}\nNotes: ${(rich && rich.notes) || ''}`);
@@ -15096,10 +15096,16 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                     const rich = igcseSyllabusData[s.name];
                     if (!rich) return;
                     const tier = s.level || 'Extended';
-                    const topics = [...(rich.topicDetails[tier] || rich.topicDetails['Extended'] || [])].sort((a,b)=>b.priority-a.priority).slice(0, 12);
+                    // v112: this block scales with subject count and used to run 12 topics deep at
+                    // 600 chars of subtopic detail each — for a student with several subjects that's
+                    // easily 15-20k+ tokens on its own, on top of the rest of the prompt and the
+                    // completion budget, which is what was tripping Groq's per-minute token limit
+                    // outright (413 "Request too large"). Halved both knobs; the plan only ever
+                    // names/prioritizes chapters, so this is far more scope than it needs anyway.
+                    const topics = [...(rich.topicDetails[tier] || rich.topicDetails['Extended'] || [])].sort((a,b)=>b.priority-a.priority).slice(0, 8);
                     const papers = (rich.papers || []).filter(p => p.tier === 'All' || p.tier === tier || (tier === 'Core' && p.tier === 'Core') || (tier === 'Extended' && p.tier === 'Extended'));
                     const paperLines = papers.map(p => `  - Paper ${p.num} (${p.name}): ${p.duration_min}min, ${p.marks} marks, ${p.weight_pct}% weight, ${p.calc ? 'calc allowed' : 'no calc'}`).join('\n');
-                    const topicLines = topics.map(t => `  • ${t.chapter} [priority ${t.priority}/5]\n    ${t.subtopics.substring(0, 600)}${t.subtopics.length > 600 ? '...' : ''}`).join('\n');
+                    const topicLines = topics.map(t => `  • ${t.chapter} [priority ${t.priority}/5]\n    ${t.subtopics.substring(0, 300)}${t.subtopics.length > 300 ? '...' : ''}`).join('\n');
                     const aos = (rich.aos || []).map(a => `${a.code} (${a.weight_pct}%)`).join(', ');
                     blocks.push(`▼ ${s.name} (${rich.code}, ${rich.version}, tier: ${tier})\nExam papers:\n${paperLines}\nAssessment Objectives: ${aos}\nHIGH-PRIORITY TOPICS (use chapter NAMES exactly as written):\n${topicLines}\nNotes: ${rich.notes || ''}`);
                 });

@@ -8317,7 +8317,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                             <div style="display:flex;gap:8px;">
                                 <button onclick="apexOpenHomeworkBreakModal()" title="Carve out unplanned homework and replan the rest of today" style="background:var(--bg-secondary);color:var(--text-primary);border:2px solid var(--border);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">📚 Homework</button>
                                 <button onclick="PMD.openWizard()" title="Build your own day step by step, with a drag-and-drop calendar" style="background:var(--bg-secondary);color:var(--text-primary);border:2px solid var(--border);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🎤 My Own Day</button>
-                                <button onclick="regenerateTodayPlan()" style="background:var(--bg-secondary);color:var(--text-primary);border:2px solid var(--border);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↺ Run</button>
+                                <button id="runTodayPlanBtn" onclick="regenerateTodayPlan()" style="display:none;background:var(--bg-secondary);color:var(--text-primary);border:2px solid var(--border);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↺ Run</button>
                                 <button onclick="showWeekSubview('week')" style="background:var(--accent);color:var(--btn-text);border:none;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Week View →</button>
                             </div>
                         </div>
@@ -15083,7 +15083,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                     if (typeof jeeNeetSyllabusData === 'undefined') return 'Rich syllabus data not loaded.';
                     const blocks = [];
                     studentData.subjects.forEach(s => {
-                        const topics = [...apexGetSyllabusTopicDetails(s.name)].sort((a,b)=>b.priority-a.priority).slice(0, 8);
+                        const topics = [...apexGetSyllabusTopicDetails(s.name)].sort((a,b)=>b.priority-a.priority).slice(0, 5);
                         const topicLines = topics.map(t => `  • ${t.chapter} [priority ${t.priority}/5]${t.examRelevance ? ' [' + t.examRelevance + ']' : ''}`).join('\n');
                         const rich = jeeNeetSyllabusData[s.name];
                         blocks.push(`▼ ${s.name} (${apexGetSubjectTierLabel(s)}, ${(rich && rich.version) || ''})\nHIGH-PRIORITY CHAPTERS (use chapter NAMES exactly as written):\n${topicLines}\nNotes: ${(rich && rich.notes) || ''}`);
@@ -15096,16 +15096,17 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                     const rich = igcseSyllabusData[s.name];
                     if (!rich) return;
                     const tier = s.level || 'Extended';
-                    // v112: this block scales with subject count and used to run 12 topics deep at
+                    // v112/v113: this block scales with subject count. Originally 12 topics deep at
                     // 600 chars of subtopic detail each — for a student with several subjects that's
                     // easily 15-20k+ tokens on its own, on top of the rest of the prompt and the
-                    // completion budget, which is what was tripping Groq's per-minute token limit
-                    // outright (413 "Request too large"). Halved both knobs; the plan only ever
-                    // names/prioritizes chapters, so this is far more scope than it needs anyway.
-                    const topics = [...(rich.topicDetails[tier] || rich.topicDetails['Extended'] || [])].sort((a,b)=>b.priority-a.priority).slice(0, 8);
+                    // completion budget, which was tripping Groq's per-minute token limit outright
+                    // (413 "Request too large"). A first halving (12->8, 600->300) still wasn't
+                    // enough for a real multi-subject account, so cut further; the plan only ever
+                    // names/prioritizes chapters, so even this is more scope than it strictly needs.
+                    const topics = [...(rich.topicDetails[tier] || rich.topicDetails['Extended'] || [])].sort((a,b)=>b.priority-a.priority).slice(0, 5);
                     const papers = (rich.papers || []).filter(p => p.tier === 'All' || p.tier === tier || (tier === 'Core' && p.tier === 'Core') || (tier === 'Extended' && p.tier === 'Extended'));
                     const paperLines = papers.map(p => `  - Paper ${p.num} (${p.name}): ${p.duration_min}min, ${p.marks} marks, ${p.weight_pct}% weight, ${p.calc ? 'calc allowed' : 'no calc'}`).join('\n');
-                    const topicLines = topics.map(t => `  • ${t.chapter} [priority ${t.priority}/5]\n    ${t.subtopics.substring(0, 300)}${t.subtopics.length > 300 ? '...' : ''}`).join('\n');
+                    const topicLines = topics.map(t => `  • ${t.chapter} [priority ${t.priority}/5]\n    ${t.subtopics.substring(0, 150)}${t.subtopics.length > 150 ? '...' : ''}`).join('\n');
                     const aos = (rich.aos || []).map(a => `${a.code} (${a.weight_pct}%)`).join(', ');
                     blocks.push(`▼ ${s.name} (${rich.code}, ${rich.version}, tier: ${tier})\nExam papers:\n${paperLines}\nAssessment Objectives: ${aos}\nHIGH-PRIORITY TOPICS (use chapter NAMES exactly as written):\n${topicLines}\nNotes: ${rich.notes || ''}`);
                 });
@@ -15133,7 +15134,12 @@ IMPORTANT: Schedule study OUTSIDE school hours. After long school days (10+ hour
                     if (completed.length > 0) lines.push(`${subj}: Completed in class — ${completed.join(', ')}`);
                     if (ongoing.length > 0) lines.push(`${subj}: Ongoing in class (partially taught, don't assume full syllabus coverage yet) — ${ongoing.join(', ')}`);
                 });
-                return lines.length > 0 ? lines.join('\n') : 'No chapters logged yet — start with foundation chapters.';
+                if (!lines.length) return 'No chapters logged yet — start with foundation chapters.';
+                // v113: unbounded before — a student logging many chapters across many subjects
+                // over months could genuinely run this into the thousands of characters. Capped
+                // as one more guard against the same per-minute token limit as the syllabus block.
+                const joined = lines.join('\n');
+                return joined.length > 2500 ? joined.slice(0, 2500) + '\n...' : joined;
             })();
 
             const upcomingTestBlock = activeTest ? apexNormalizeTestSubjects(activeTest).map(s => `${s.subject} — test in ${activeTest.daysAway} day${activeTest.daysAway === 1 ? '' : 's'} (${activeTest.date}).
@@ -15185,11 +15191,20 @@ ${(s.chapters && s.chapters.length)
                 // Display it
                 const dataFresh = JSON.parse(localStorage.getItem('studentData'));
                 displayStructuredPlan(result, dataFresh);
+                // A successful generation means the student doesn't need a manual retry button
+                // any more — only surface it again if a future generation actually fails.
+                const runBtnOk = document.getElementById('runTodayPlanBtn');
+                if (runBtnOk) runBtnOk.style.display = 'none';
             } catch(e) {
                 console.error('Plan generation failed:', e);
                 _apexLastPlanGenError = e.message || 'Unknown error';
                 const planEl = document.getElementById('planContent');
                 if (planEl) planEl.innerHTML = `<div class="plan-empty" style="text-align:center;padding:30px;color:var(--text-secondary);">⚠️ Couldn't generate plan.<br><small>${apexFriendlyError(e, 'plan.daily')}</small></div>`;
+                // The "↺ Run" button stays hidden the rest of the time (see runTodayPlanBtn) —
+                // this is the one place it's meant to appear, right when there's actually
+                // something to retry.
+                const runBtn = document.getElementById('runTodayPlanBtn');
+                if (runBtn) runBtn.style.display = '';
             }
         }
                 // ========== HOMEPAGE ==========

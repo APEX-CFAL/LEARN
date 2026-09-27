@@ -8058,6 +8058,18 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                     <div id="examDatePreview" style="display:none;"></div>
                 </div>
 
+                <!-- v117: opt out of a fixed schedule entirely — some students just want a nudge
+                     on what to focus on, not a timed timetable telling them what to do and when. -->
+                <div style="max-width:520px;margin:0 auto var(--sp-4);">
+                    <div style="font-size:var(--fs-heading);font-weight:700;color:var(--c-text-1);margin-bottom:var(--sp-2);">Use our daily timetable?</div>
+                    <div style="font-size:12px;color:var(--c-text-2, var(--text-secondary));margin-bottom:12px;line-height:1.5;">Yes builds you a timed daily schedule, like the rest of this setup describes. No skips the fixed schedule — you'll get recommendations of what's worth focusing on instead, and study however you like.</div>
+                    <div id="useTimetableBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">
+                        <button type="button" onclick="selectUseTimetable(true,this)" class="ds-selectable use-timetable-btn selected" id="useTimetableYes" style="padding:var(--ds-5) var(--ds-4);border-radius:var(--ds-r-md);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:center;">Yes, build my timetable</button>
+                        <button type="button" onclick="selectUseTimetable(false,this)" class="ds-selectable use-timetable-btn" id="useTimetableNo" style="padding:var(--ds-5) var(--ds-4);border-radius:var(--ds-r-md);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;text-align:center;">No, just recommend</button>
+                    </div>
+                    <input type="hidden" id="useTimetable" value="true">
+                </div>
+
                 <div class="btn-group">
                     <button class="ds-btn ds-btn-secondary ds-btn-lg" onclick="prevStep(8)">Back</button>
                     <button class="ds-btn ds-btn-primary ds-btn-lg" onclick="completeOnboarding()">My Plan</button>
@@ -8311,7 +8323,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                     <div id="weekTodaySub">
                         <div class="home-header-row" style="margin-bottom: 20px;">
                             <div>
-                                <div class="home-today-label">Today's Timetable</div>
+                                <div class="home-today-label" id="todayPlanLabel">Today's Timetable</div>
                                 <div class="home-progress-counter" id="todayPlanCounter"></div>
                             </div>
                             <div style="display:flex;gap:8px;">
@@ -14479,6 +14491,12 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             if (activeBtn) activeBtn.classList.add('selected');
         }
 
+        function selectUseTimetable(value, btn) {
+            document.getElementById('useTimetable').value = value ? 'true' : 'false';
+            document.querySelectorAll('.use-timetable-btn').forEach(b => b.classList.remove('selected'));
+            (btn || document.getElementById(value ? 'useTimetableYes' : 'useTimetableNo')).classList.add('selected');
+        }
+
         // Re-apply all onboarding selection styles when theme/dark mode changes
         function refreshOnboardingStyles() {
             const isDark = document.body.classList.contains('dark-mode');
@@ -14752,6 +14770,10 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             studentData.concentrationTime = concEl ? parseInt(concEl.value) : 45;
             studentData.dailyStudyTime = studyEl ? parseInt(studyEl.value) : 4;
             studentData.productiveTime = prodEl ? prodEl.value : 'morning';
+            // v117: defaults true (a timed timetable) if the student never touched the toggle —
+            // matches every existing account's behavior, which never had this choice at all.
+            const useTimetableEl = document.getElementById('useTimetable');
+            studentData.useTimetable = !useTimetableEl || useTimetableEl.value !== 'false';
 
             // v47: Save school timetable
             studentData.schoolTimetable = getSchoolTimetable();
@@ -15165,7 +15187,14 @@ ${(s.chapters && s.chapters.length)
                 const planEl = document.getElementById('planContent');
                 if (planEl) planEl.innerHTML = '<div class="ds-skeleton" style="height:72px;margin-bottom:10px;"></div><div class="ds-skeleton" style="height:72px;margin-bottom:10px;"></div><div class="ds-skeleton" style="height:72px;margin-bottom:10px;"></div>';
 
-                const { data: parsed } = await apexAiRun('plan.daily', {
+                // v117: "Use our timetable?" from onboarding — false means the student opted out
+                // of a fixed, timed schedule. plan.recommendations shares this exact ctx (it only
+                // needs a subset of these fields) and returns the same {sessions} shape, so
+                // everything downstream (rendering, Quiz Me auto-start, chapter-progress checks)
+                // works unchanged; only which prompt runs, and how the result is labelled/
+                // rendered, differs.
+                const useRecommendations = studentData.useTimetable === false;
+                const { data: parsed } = await apexAiRun(useRecommendations ? 'plan.recommendations' : 'plan.daily', {
                     student: data,
                     subjectsText: subjects, subjectCount: subjectNames.length,
                     examDateText: examDate ? examDate.toDateString() : 'not set', daysUntilExam, targetHours,
@@ -23533,6 +23562,7 @@ Return ONLY JSON:
                 const parsed = apexParseAiJson(planText);
                 sessions = parsed.sessions || [];
                 advice = parsed.advice || '';
+                var isRecommendations = !!parsed.isRecommendations;
                 if (advice) {
                     const adviceEl = document.getElementById('aiTipsContent');
                     if (adviceEl) adviceEl.textContent = advice;
@@ -23629,7 +23659,7 @@ Return ONLY JSON:
                         </div>
                         <div style="flex-shrink:0;text-align:right;">
                             <div style="display:inline-block;font-size:11px;font-weight:700;color:${act.color};background:${act.bg};border-radius:8px;padding:4px 10px;white-space:nowrap;">${act.label}</div>
-                            <div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:4px;">${s.durationMinutes || 30} min${s.startTime ? ' · ' + s.startTime : ''}</div>
+                            ${isRecommendations ? '' : `<div style="font-size:11px;color:var(--text-secondary);font-weight:600;margin-top:4px;">${s.durationMinutes || 30} min${s.startTime ? ' · ' + s.startTime : ''}</div>`}
                         </div>
                     </div>
                     <div class="plan-card-actions" id="pcard-actions-${i}" style="margin-top:10px;display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
@@ -23642,23 +23672,34 @@ Return ONLY JSON:
             };
 
             let html = apexRenderSchoolBlockHTML(new Date().getDay());
-            slotOrder.forEach(slot => {
-                const slotSessions = grouped[slot] || [];
-                if (!slotSessions.length) return;
-                const slotMins = slotSessions.reduce((a, s) => a + (s.durationMinutes || 45), 0);
-                html += `<div class="time-slot-group">
-                    <div class="time-slot-header">
-                        <span class="time-slot-icon">${slotIcons[slot]}</span>
-                        <span class="time-slot-label">${slotLabels[slot]}</span>
-                        <span class="time-slot-duration">${slotMins} min</span>
-                    </div>
-                    ${slotSessions.map(s => buildCard(s, s._idx)).join('')}
-                </div>`;
-            });
+            if (isRecommendations) {
+                // v117: no fixed schedule to slot these into — a flat list in the AI's own
+                // priority order, not grouped/timed like a real timetable's morning/afternoon/
+                // evening sections (those fields don't mean anything for a mode with no schedule).
+                html += sessions.map((s, i) => buildCard(s, i)).join('');
+            } else {
+                slotOrder.forEach(slot => {
+                    const slotSessions = grouped[slot] || [];
+                    if (!slotSessions.length) return;
+                    const slotMins = slotSessions.reduce((a, s) => a + (s.durationMinutes || 45), 0);
+                    html += `<div class="time-slot-group">
+                        <div class="time-slot-header">
+                            <span class="time-slot-icon">${slotIcons[slot]}</span>
+                            <span class="time-slot-label">${slotLabels[slot]}</span>
+                            <span class="time-slot-duration">${slotMins} min</span>
+                        </div>
+                        ${slotSessions.map(s => buildCard(s, s._idx)).join('')}
+                    </div>`;
+                });
+            }
             container.innerHTML = html;
             updateHomePills();
             const progressCounter = document.getElementById('progressCounter');
-            if (progressCounter) progressCounter.textContent = `0/${sessions.length} sessions • ${totalMinutes} min total`;
+            if (progressCounter) progressCounter.textContent = isRecommendations
+                ? `${sessions.length} recommendation${sessions.length === 1 ? '' : 's'} for today`
+                : `0/${sessions.length} sessions • ${totalMinutes} min total`;
+            const label = document.getElementById('todayPlanLabel');
+            if (label) label.textContent = isRecommendations ? "Today's Recommendations" : "Today's Timetable";
         }
 
         function checkIncompletionBanner() {

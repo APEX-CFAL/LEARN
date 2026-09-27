@@ -8141,8 +8141,9 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
 
             </div><!-- /sidebar-nav-scroll -->
             <div class="sidebar-bottom-controls">
-                <!-- AI Refresh -->
-                <div class="control-row">
+                <!-- AI Refresh — hidden until something actually goes wrong (apexShowRunButton), so
+                     it doesn't sit there looking like a mystery dev control the rest of the time. -->
+                <div class="control-row" id="refreshAiControlRow" style="display:none;">
                     <span class="control-label">Refresh AI</span>
                     <button class="restart-icon-btn" onclick="refreshAIPlan()" title="Re-run AI with latest data" style="background: var(--accent); color:var(--btn-text); border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.3px;">
                         ↺ Run
@@ -13095,7 +13096,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                         apexNoteEditorRender();
                         fxToast('✅ Imported — review and edit below.');
                     } catch (err) {
-                        fxToast('⚠️ Could not read PDF: ' + err.message);
+                        fxToast('⚠️ Could not read PDF. ' + apexFriendlyError(err, 'pdf.read'));
                     }
                 };
                 reader.readAsArrayBuffer(file);
@@ -15160,7 +15161,7 @@ ${(s.chapters && s.chapters.length)
                 console.error('Plan generation failed:', e);
                 _apexLastPlanGenError = e.message || 'Unknown error';
                 const planEl = document.getElementById('planContent');
-                if (planEl) planEl.innerHTML = `<div class="plan-empty" style="text-align:center;padding:30px;color:var(--text-secondary);">⚠️ Couldn't generate plan. Check your API key and try again.<br><small>${e.message}</small></div>`;
+                if (planEl) planEl.innerHTML = `<div class="plan-empty" style="text-align:center;padding:30px;color:var(--text-secondary);">⚠️ Couldn't generate plan.<br><small>${apexFriendlyError(e, 'plan.daily')}</small></div>`;
             }
         }
                 // ========== HOMEPAGE ==========
@@ -15658,7 +15659,7 @@ ${(s.chapters && s.chapters.length)
             } catch(e) {
                 console.error('Week plan failed:', e);
                 localStorage.removeItem('weekPlan'); // v44: Clear corrupt data
-                if (detailEl) detailEl.innerHTML = `<div class="plan-empty">⚠️ Couldn't generate week plan. ${e.message || 'Check your API key and try again.'}</div>`;
+                if (detailEl) detailEl.innerHTML = `<div class="plan-empty">⚠️ Couldn't generate week plan. ${apexFriendlyError(e, 'plan.week')}</div>`;
             }
         }
 
@@ -17177,7 +17178,7 @@ ${(s.chapters && s.chapters.length)
                 const pl3 = document.getElementById('practiceLoading');
                 const pe2 = document.getElementById('practiceEmpty');
                 if (pl3) pl3.style.display = 'none';
-                if (pe2) { pe2.style.display = 'block'; pe2.innerHTML = `<p>⚠️ Couldn't generate questions. ${e.message}</p><button class="generate-btn" onclick="practiceGenerateAndStart()">Try Again</button>`; }
+                if (pe2) { pe2.style.display = 'block'; pe2.innerHTML = `<p>⚠️ Couldn't generate questions. ${apexFriendlyError(e, 'practice.generate')}</p><button class="generate-btn" onclick="practiceGenerateAndStart()">Try Again</button>`; }
             }
         }
 
@@ -18954,7 +18955,7 @@ ${(s.chapters && s.chapters.length)
                 });
                 resultEl.innerHTML = `<div style="padding:16px;background:var(--bg3);border-radius:12px;white-space:pre-wrap;font-size:14px;line-height:1.7;">${result}</div>`;
             } catch(e) {
-                resultEl.innerHTML = `<div style="padding:16px;color:var(--text-secondary);">⚠️ Marking failed. ${e.message}</div>`;
+                resultEl.innerHTML = `<div style="padding:16px;color:var(--text-secondary);">⚠️ Marking failed. ${apexFriendlyError(e, 'paper.mark')}</div>`;
             }
         }
         function savePaperNotes() {
@@ -21485,7 +21486,7 @@ Return ONLY JSON:
             } catch(e) {
                 console.error('Timetable processing failed:', e);
                 if (previewEl) {
-                    previewEl.innerHTML = apexTimetablePasteBoxHtml('Could not find any exam dates in that text for your subjects — check it and try again, or use "+ Add" to enter one manually. (' + e.message + ')');
+                    previewEl.innerHTML = apexTimetablePasteBoxHtml('Could not find any exam dates in that text for your subjects — check it and try again, or use "+ Add" to enter one manually. (' + apexFriendlyError(e, 'timetable.parse') + ')');
                 }
             }
         }
@@ -21596,7 +21597,7 @@ Return ONLY JSON:
                     if (btn) { btn.textContent = '❌ Failed'; btn.style.background = '#EF4444'; }
                 }
             } catch(e) {
-                const msg = e.name === 'AbortError' ? 'Timed out after 10s' : (e.message || 'Network error');
+                const msg = e.name === 'AbortError' ? 'Timed out after 10s' : apexFriendlyError(e, 'gemini.keyTest');
                 if (resultEl) { resultEl.style.background = '#FEE2E2'; resultEl.style.color = '#991B1B'; resultEl.textContent = '❌ Gemini: ' + msg; }
                 if (btn) { btn.textContent = '❌ Error'; btn.style.background = '#EF4444'; }
             }
@@ -21677,7 +21678,7 @@ Return ONLY JSON:
                     if (btn) { btn.textContent = '❌ Failed'; btn.style.background = '#EF4444'; }
                 }
             } catch(e) {
-                const msg = e.name === 'AbortError' ? 'Timed out after 10s' : (e.message || 'Network error');
+                const msg = e.name === 'AbortError' ? 'Timed out after 10s' : apexFriendlyError(e, 'groq.keyTest');
                 if (resultEl) { resultEl.style.background = '#FEE2E2'; resultEl.style.color = '#991B1B'; resultEl.textContent = '❌ Key ' + keyNum + ': ' + msg; }
                 if (btn) { btn.textContent = '❌ Error'; btn.style.background = '#EF4444'; }
             }
@@ -23029,7 +23030,7 @@ Return ONLY JSON:
                 renderChapterQuestions();
                 fxToast('Questions generated');
             } catch(e) {
-                if (container) container.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ ${e.message}</div>`;
+                if (container) container.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't generate questions. ${apexFriendlyError(e, 'chapterQuestions.generate')}</div>`;
             }
         }
         function toggleAnswer(idx) {
@@ -23067,6 +23068,22 @@ Return ONLY JSON:
         }
 
         // Show toast notification
+        // ── Friendly, non-technical error display ──
+        // Students/testers should never see a raw API error dump — it reads as broken. This shows
+        // a short, harmless-looking error code instead, logs the real error (message + where it
+        // happened) to the console so it can actually be debugged, and reveals the "Refresh AI"
+        // button (hidden the rest of the time) as one obvious, unscary next step.
+        function apexFriendlyError(e, context) {
+            const code = Math.floor(1000 + Math.random() * 9000);
+            console.error(`[Apex Error #${code}]` + (context ? ' ' + context : '') + ':', e);
+            apexShowRunButton();
+            return `Error #${code} — we'll fix this. Try reloading the page.`;
+        }
+        function apexShowRunButton() {
+            const row = document.getElementById('refreshAiControlRow');
+            if (row) row.style.display = 'flex';
+        }
+
         function fxToast(message, duration) {
             let toast = document.getElementById('dsToast');
             if (!toast) {
@@ -23076,7 +23093,9 @@ Return ONLY JSON:
                 document.body.appendChild(area);
                 toast = document.getElementById('dsToast');
             }
-            toast.textContent = '✓ ' + (message || 'Done');
+            // A warning toast already carries its own ⚠️ — don't stack a ✓ in front of it too.
+            const msg = message || 'Done';
+            toast.textContent = /^[⚠️❌]/.test(msg) ? msg : ('✓ ' + msg);
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), duration || 2500);
         }
@@ -24481,7 +24500,7 @@ Return ONLY JSON:
                 window._brushState.recaps = parsed.recaps || [];
                 brushShowRecap(0);
             } catch(e) {
-                if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't build recap. ${e.message}</div><button class="generate-btn" onclick="brushRecapStart('${subjectName.replace(/'/g,"\\'")}', ${JSON.stringify(chapters).replace(/"/g,'&quot;')})">Try Again</button>`;
+                if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't build recap. ${apexFriendlyError(e, 'quiz.brushRecap')}</div><button class="generate-btn" onclick="brushRecapStart('${subjectName.replace(/'/g,"\\'")}', ${JSON.stringify(chapters).replace(/"/g,'&quot;')})">Try Again</button>`;
             }
         }
 
@@ -24845,7 +24864,7 @@ Return ONLY JSON:
                 { const _el54 = document.getElementById('testMeResults'); if (_el54) _el54.style.display = 'none'; }
                 showTestQuestion();
             } catch (e) {
-                if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't generate chaos test. ${e.message}</div><button class="generate-btn" onclick="renderChaosSetup()">Try Again</button>`;
+                if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't generate chaos test. ${apexFriendlyError(e, 'chaos.generate')}</div><button class="generate-btn" onclick="renderChaosSetup()">Try Again</button>`;
             }
         }
 
@@ -25386,7 +25405,7 @@ Return ONLY JSON:
                 apexAttachFocusGuard(apexHandleQuizFocusViolation);
                 showTestQuestion();
             } catch(e) {
-                if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't generate quiz. ${e.message}</div><button class="generate-btn" onclick="renderQuizSetup()">Try Again</button>`;
+                if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't generate quiz. ${apexFriendlyError(e, 'quiz.generate')}</div><button class="generate-btn" onclick="renderQuizSetup()">Try Again</button>`;
             }
         }
 
@@ -25432,7 +25451,7 @@ Return ONLY JSON:
                 apexAttachFocusGuard(apexHandleQuizFocusViolation);
                 showTestQuestion();
             } catch(e) {
-                if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't generate quiz. ${e.message}</div><button class="generate-btn" onclick="startMistakeQuizForSubject('${subjectName.replace(/'/g, "\\'")}')">Try Again</button>`;
+                if (grid) grid.innerHTML = `<div style="padding:20px;color:var(--text-secondary);">⚠️ Couldn't generate quiz. ${apexFriendlyError(e, 'quiz.mistake')}</div><button class="generate-btn" onclick="startMistakeQuizForSubject('${subjectName.replace(/'/g, "\\'")}')">Try Again</button>`;
             }
         }
 
@@ -25921,7 +25940,7 @@ Return ONLY JSON:
             } catch(e) {
                 if (loadingEl) loadingEl.style.display = 'none';
                 responseEl.style.display = 'block';
-                responseEl.innerHTML = '⚠️ AI is busy — try again in a few seconds. <span style="font-size:11px;color:var(--text-secondary);">(' + e.message + ')</span>';
+                responseEl.innerHTML = '⚠️ AI is busy — try again in a few seconds. <span style="font-size:11px;color:var(--text-secondary);">(' + apexFriendlyError(e, 'chat.askCoach') + ')</span>';
             }
         }
         // Allow Enter key to submit AI question
@@ -25956,7 +25975,7 @@ Return ONLY JSON:
             } catch(e) {
                 if (loadingEl) loadingEl.style.display = 'none';
                 responseEl.style.display = 'block';
-                responseEl.innerHTML = '⚠️ AI is busy — try again in a few seconds. <span style="font-size:11px;color:var(--text-secondary);">(' + (e.message||'timeout') + ')</span>';
+                responseEl.innerHTML = '⚠️ AI is busy — try again in a few seconds. <span style="font-size:11px;color:var(--text-secondary);">(' + apexFriendlyError(e, 'log.askAI') + ')</span>';
             }
         }
 
@@ -27415,7 +27434,7 @@ Return ONLY JSON:
                     practiceStartChapter(chIdx);
                 } catch(e) {
                     console.error('[NAV-PRACTICE] Error during navigation:', e);
-                    fxToast('⚠️ Navigation error: ' + e.message);
+                    fxToast('⚠️ ' + apexFriendlyError(e, 'nav.practice'));
                 }
             }, 150);
         }
@@ -27564,7 +27583,7 @@ Return ONLY JSON:
                 window._iqState = { questions: qs, current: 0, score: 0, total: qs.length * 2, subject, topic, hints: 0 };
                 showInlineQuestion();
             } catch(e) {
-                document.getElementById('iqContent').innerHTML = '<p style="color:var(--c-danger);">Error: ' + e.message + '</p>';
+                document.getElementById('iqContent').innerHTML = '<p style="color:var(--c-danger);">⚠️ ' + apexFriendlyError(e, 'inlineQuestion') + '</p>';
             }
         }
 
@@ -28650,7 +28669,7 @@ Return ONLY JSON:
                         } else {
                             if (statusEl) statusEl.textContent = '⚠️ PDF has little readable text. Try a photo or type manually.';
                         }
-                    } catch(err) { if (statusEl) statusEl.textContent = '⚠️ Error: ' + err.message; }
+                    } catch(err) { if (statusEl) statusEl.textContent = '⚠️ ' + apexFriendlyError(err, 'pdf.upload'); }
                 };
                 reader.readAsArrayBuffer(file);
             } else if (file.type.startsWith('image/')) {
@@ -28828,7 +28847,7 @@ Return ONLY JSON:
                 window._lastMissingConcepts = parsed.missing || [];
                 container.innerHTML = h;
             } catch(err) {
-                container.innerHTML = '<div style="color:var(--c-danger);font-size:13px;">Could not check: ' + err.message + '</div>';
+                container.innerHTML = '<div style="color:var(--c-danger);font-size:13px;">⚠️ Couldn\'t check for gaps. ' + apexFriendlyError(err, 'notes.gapCheck') + '</div>';
             }
         }
 
@@ -28868,7 +28887,7 @@ Return ONLY JSON:
                 renderChapterNotes();
                 fxToast('Missing concepts added to your notes!');
             } catch(err) {
-                if (container) container.innerHTML = '<div style="color:var(--c-danger);font-size:13px;">Failed: ' + err.message + '</div>';
+                if (container) container.innerHTML = '<div style="color:var(--c-danger);font-size:13px;">⚠️ ' + apexFriendlyError(err, 'notes.missingParts') + '</div>';
             }
         }
 

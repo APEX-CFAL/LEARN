@@ -38,7 +38,15 @@ async function once(key, messages, maxTokens, temperature, tools) {
   } catch (err) { throw { network: true, body: String(err && err.message || err) }; }
   if (!res.ok) {
     const body = await res.text();
-    throw { status: res.status, body, retryAfter: parseFloat(res.headers && res.headers.get && res.headers.get('retry-after')) || 0 };
+    // Groq's 429 responses put the actual suggested wait inside the error message text itself
+    // ("...Please try again in 8.66s") rather than a standard Retry-After header, which this app
+    // never read — every 429 fell straight to the (much shorter) hardcoded fallback wait no
+    // matter what Groq actually asked for, defeating the point of waiting for a per-minute
+    // budget to clear. Header still wins if a gateway ever does send one.
+    const headerWait = parseFloat(res.headers && res.headers.get && res.headers.get('retry-after')) || 0;
+    const bodyMatch = body.match(/try again in ([\d.]+)s/i);
+    const bodyWait = bodyMatch ? parseFloat(bodyMatch[1]) : 0;
+    throw { status: res.status, body, retryAfter: headerWait || bodyWait || 0 };
   }
   const json = await res.json();
   return json.choices[0].message;

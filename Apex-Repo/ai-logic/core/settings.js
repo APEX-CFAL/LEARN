@@ -1,7 +1,7 @@
 /* Tune the model + call behavior here — nothing else in the AI logic should need touching
    for a model swap, a token-budget change, or different retry behavior. */
 export const SETTINGS = {
-  model: 'openai/gpt-oss-120b',
+  model: 'llama-3.3-70b-versatile',
   endpoint: 'https://api.groq.com/openai/v1/chat/completions',
   temperature: 0.4,     // per-feature override: add `temperature` to a feature's def()
   minGapMs: 1100,       // spacing between calls (avoids free-tier 429 bursts)

@@ -13908,7 +13908,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
                         body: JSON.stringify({
-                            model: 'llama-3.3-70b-versatile',
+                            model: 'openai/gpt-oss-120b',
                             messages: [
                                 { role: 'system', content: systemPrompt },
                                 { role: 'user', content: userPrompt }
@@ -20916,7 +20916,7 @@ Be specific about IGCSE ${subj} ${_ccSelectedSubject.level} curriculum requireme
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
                     body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile',
+                        model: 'openai/gpt-oss-120b',
                         messages: [{ role: 'user', content: prompt }],
                         max_tokens: 600,
                         temperature: 0.3
@@ -21078,7 +21078,7 @@ Return ONLY JSON:
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
                     body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile',
+                        model: 'openai/gpt-oss-120b',
                         messages: [{ role: 'user', content: prompt }],
                         max_tokens: 1200,
                         temperature: 0.4
@@ -21683,7 +21683,7 @@ Return ONLY JSON:
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
                     body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile',
+                        model: 'openai/gpt-oss-120b',
                         messages: [{ role: 'user', content: 'Reply with only: OK' }],
                         max_tokens: 5,
                         temperature: 0

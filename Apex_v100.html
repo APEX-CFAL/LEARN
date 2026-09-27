@@ -24675,6 +24675,18 @@ Return ONLY JSON:
             const _preselect = (opts.preselectChapters || []).filter(ch => chaptersToShow.includes(ch));
             window._quizSetup = { subjectName, chapters: chaptersToShow, pickedChapters: _preselect, difficulty: 'Medium', qtypes: [], count: 10, singleChapterOnly: !!opts.singleChapterOnly, mode: opts.mode || null };
 
+            // v116: when the day's plan itself picked this quiz's subject+chapter(s)
+            // (opts.autoStart, set by navigateToQuizMe), the student already chose to tap this
+            // exact card — landing on the setup screen just makes them re-confirm settings the
+            // plan already decided. Skip straight into the quiz on the plan's own chapter(s),
+            // using the same Medium/10-question defaults the setup screen itself defaults to.
+            // Falls through to the normal setup screen if the plan's chapter didn't actually
+            // match a real one — nothing safe to auto-start on in that case.
+            if (opts.autoStart && _preselect.length) {
+                startTestOnChapters(subjectName, _preselect, 'Medium', [], 10); // sets quizMeScreen='active' itself
+                return;
+            }
+
             renderQuizSetup();
         }
 
@@ -24705,7 +24717,7 @@ Return ONLY JSON:
             apexRenderSubjectCards(grid, sub => `startMistakeQuizForSubject('${sub.name.replace(/'/g, "\\'")}')`);
         }
 
-        function startMistakeQuizForSubject(subjectName) {
+        function startMistakeQuizForSubject(subjectName, autoStart) {
             const log = JSON.parse(localStorage.getItem('mistakeLog') || '[]').filter(m => m.subject === subjectName);
             const grid = document.getElementById('testMeSubjectGrid');
             if (log.length < 5) {
@@ -24723,6 +24735,9 @@ Return ONLY JSON:
             // student choice — so this lands straight on step 2 (question types) with the log's
             // own chapters pre-filled (only used for the count formula/review-screen display).
             window._quizSetup = { subjectName, chapters: distinctChapters, pickedChapters: distinctChapters, difficulty: 'Medium', qtypes: [], count: 10, singleChapterOnly: false, mode: 'mistake', step: 2 };
+            // v116: a plan card's "Mistake Quiz" has nothing left for the student to pick anyway
+            // (chapters come from the log, not a choice) — see navigateToQuizMe.
+            if (autoStart) { startTestOnChapters(subjectName, distinctChapters, 'Medium', [], 10); return; }
             renderQuizSetup();
         }
 
@@ -27573,10 +27588,14 @@ Return ONLY JSON:
             const sub = (data.subjects || []).find(s => s.name === r.subjectName);
             const allChapters = sub ? apexGetChaptersForSubject(sub) : [];
             const preselect = sub ? apexChaptersInTopic(sub, r.session.chapter || r.session.topic || '').map(i => allChapters[i]).filter(Boolean) : [];
-            if (mode === 'mistake') { startMistakeQuizForSubject(r.subjectName); return; }
-            if (mode === 'timed') { startTest(r.subjectName, { mode: 'timed', preselectChapters: preselect }); return; }
-            if (mode === 'mixed') { startTest(r.subjectName, { preselectChapters: preselect }); return; }
-            startTest(r.subjectName, { singleChapterOnly: true, preselectChapters: preselect.slice(0, 1) }); // 'normal' (and any unrecognised mode) — safest default
+            // v116: the plan already chose subject + chapter(s) + mode for this exact card — the
+            // student tapping it is choosing to start THIS quiz, not to go configure one, so
+            // every path here auto-starts straight into the questions instead of landing on the
+            // setup screen with those same choices just pre-filled for a redundant confirm click.
+            if (mode === 'mistake') { startMistakeQuizForSubject(r.subjectName, true); return; }
+            if (mode === 'timed') { startTest(r.subjectName, { mode: 'timed', preselectChapters: preselect, autoStart: true }); return; }
+            if (mode === 'mixed') { startTest(r.subjectName, { preselectChapters: preselect, autoStart: true }); return; }
+            startTest(r.subjectName, { singleChapterOnly: true, preselectChapters: preselect.slice(0, 1), autoStart: true }); // 'normal' (and any unrecognised mode) — safest default
         }
 
         // v107: "Full Recall Test" now routes into the real Quiz Me flow instead of dead-ending

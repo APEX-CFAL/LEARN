@@ -233,6 +233,112 @@ FINAL CHECK before responding:
   }
 });
 
+/* v117: "recommendations mode" — the onboarding's "Use our timetable?" toggle, for a student who
+   doesn't want a fixed, timed schedule dictating their day. Deliberately a separate, shorter
+   feature rather than a mode flag threaded through plan.daily's already-large, "battle-tested"
+   prompt above: it shares plan.daily's content-selection judgement (don't practice before notes,
+   don't repeat a done phase, spaced repetition, mistake/mock-test eligibility) but drops every
+   rule about WHEN and for how long — no total-hours target, no time-of-day slotting, no
+   consecutive-subject interleaving, no forced pairing of a review session with a follow-up. Takes
+   the exact same ctx fields as plan.daily (the app passes the identical object to either one), and
+   returns the same {generatedDate, phase, advice, sessions} shape — including durationMinutes/
+   timeSlot on each session, since activityBounds()/cleanSessions() below still needs somewhere to
+   put a clamped value and the rest of the app (Quiz Me auto-start, chapter-progress checks) reads
+   sessions generically — so nothing downstream needs to know which mode produced this plan. Only
+   the app's own rendering hides the time fields for this mode. */
+def('plan.recommendations', {
+  title: "Today's study recommendations (no fixed schedule)", tokens: 2000, auto: true,
+  needs: [
+    'subjectsText', 'subjectCount', 'examDateText', 'daysUntilExam', 'phase', 'phaseRules',
+    'syllabusContextBlock', 'marksInfo', 'confInfo', 'chapterProgress', 'carriedOverText',
+    'fullRecallTestsText', 'phaseCompletionText', 'chapterLogText', 'aiNotesContext', 'today'
+  ],
+  build(c, p) {
+    const system = `You are an expert ${p.jee ? 'JEE/NEET study coach grounded in the NCERT syllabus' : 'IGCSE study coach powered by Cambridge methodology'}. This student chose NOT to use a fixed daily timetable — they want a short, focused list of what's worth their attention today, not a scheduled day. Recommend 3-6 specific things, never more. No time slots, no durations, no "fill N hours" — quality of judgement over coverage.
+
+RULES:
+1. ONLY use these subjects: ${c.subjectsText}.
+2. NEVER recommend "Solving Questions", any "Quiz Me: ..." mode, "Flashcards", or "Feynman-teach" on a chapter with no notes yet — check CHAPTER PROGRESS below.
+3. NEVER repeat a phase already DONE for a chapter (see PHASE COMPLETION CHECKLIST) — if notes are done, recommend revision or practice, never notes again.
+4. Carried-over sessions (yesterday's untouched ones) and any FULL RECALL TESTS DUE take priority — lead with those if present.
+5. "Mistake Quiz" only for a subject LOGGED MISTAKES below marks eligible.
+6. Vary activity types across the list rather than recommending the same kind of session repeatedly.${p.jee ? `
+7. Physics/Chemistry/Maths: once a chapter has notes, prefer "Numerical Practice" over plain "Solving Questions" unless the chapter is fact-recall-heavy.` : ''}
+
+Each recommendation still needs an "activity" from this exact list: Making Notes, Revising Notes, Flashcards, Solving Questions, Brush Recap, Quiz Me: Normal, Quiz Me: Mixed, Quiz Me: Timed, Mistake Quiz, Feynman-teach, Full Recall Test${p.jee ? ', Numerical Practice, Mock Test' : ''}.`;
+
+    const user = `Recommend what this student should focus on today — a short list, not a schedule.
+
+═══ STUDENT PROFILE ═══
+Subjects (ONLY these): ${c.subjectsText}
+Exam date: ${c.examDateText} (${c.daysUntilExam} days away) — Phase: ${c.phase}
+
+═══ ${p.jee ? 'NCERT / JEE-NEET SYLLABUS CONTEXT' : 'CAMBRIDGE IGCSE SYLLABUS CONTEXT'} ═══
+${c.syllabusContextBlock}
+
+═══ PERFORMANCE DATA ═══
+Last year grades: ${c.marksInfo}
+Self-rated confidence (1-10): ${c.confInfo}
+
+═══ CHAPTER PROGRESS ═══
+${c.chapterProgress || 'No chapter data yet — recommend the first chapter of each subject.'}
+
+═══ CARRIED OVER FROM YESTERDAY (untouched) ═══
+${c.carriedOverText}
+
+═══ FULL RECALL TESTS DUE ═══
+${c.fullRecallTestsText}
+
+═══ LOGGED MISTAKES ═══
+${mistakeEligibilityText(c)}
+
+═══ PHASE COMPLETION CHECKLIST — DO NOT REPEAT COMPLETED PHASES ═══
+${c.phaseCompletionText}
+
+═══ CHAPTER LOG (student-reported class progress) ═══
+${c.chapterLogText}
+
+═══ AI'S OWN NOTES ABOUT THIS STUDENT ═══
+${c.aiNotesContext}
+
+═══ PHASE RULES FOR "${c.phase}" ═══
+${c.phaseRules}
+
+RESPOND WITH ONLY VALID JSON. No markdown. No backticks. No explanation text.
+{
+  "generatedDate": "${c.today}",
+  "phase": "${c.phase}",
+  "advice": "One encouraging sentence about today's focus (max 20 words)",
+  "sessions": [
+    {
+      "subject": "Exact subject name from the list above",
+      "topic": "${p.jee ? 'Specific NCERT chapter name' : 'Specific IGCSE chapter name'}",
+      "activity": "Making Notes|Revising Notes|Flashcards|Solving Questions|Brush Recap|Quiz Me: Normal|Quiz Me: Mixed|Quiz Me: Timed|Mistake Quiz|Feynman-teach|Full Recall Test${p.jee ? '|Numerical Practice|Mock Test' : ''}",
+      "why": "Why this matters today (max 20 words)",
+      "priority": "high|medium|low"
+    }
+  ]
+}
+
+3-6 recommendations, no more. Every one must earn its place — this is a short list of what actually matters today, not a full schedule.`;
+
+    return { system, user };
+  },
+  validate(data, c, warnings) {
+    const validSubjects = ((c.student && c.student.subjects) || []).map(s => s.name);
+    const validActs = activityNames({ jee: c.student && c.student.program === 'jee_neet' });
+    const sessions = cleanSessions(data.sessions, validSubjects, validActs, warnings, 'today').slice(0, 6);
+    if (!sessions.length) throw fail('INVALID', 'The AI returned no recommendations.');
+    return {
+      generatedDate: data.generatedDate || c.today,
+      phase: data.phase || c.phase,
+      advice: data.advice || '',
+      isRecommendations: true,
+      sessions
+    };
+  }
+});
+
 /* Drops a session whose subject/activity the AI invented, clamps duration to that activity's
    real range (warning when it had to), and defaults a missing timeSlot — shared by plan.week
    (per day) and plan.wizard. */

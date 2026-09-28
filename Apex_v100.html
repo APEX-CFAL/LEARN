@@ -8387,6 +8387,20 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                         <!-- Day detail view -->
                         <div id="weekDayDetail" class="fx-slide-container"></div>
 
+                        <!-- Google Calendar — read-only mirror of the student's own school timetable,
+                             styled in the app's theme. Doesn't touch AI plan generation. -->
+                        <div style="margin-top:24px;padding-top:20px;border-top:1.5px solid var(--border);">
+                            <div class="home-header-row" style="margin-bottom:6px;">
+                                <div class="home-today-label" style="font-size:15px;">🏫 School Timetable</div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <button id="gcalConnectBtnWeek" style="display:none;background:var(--accent);color:var(--btn-text);border:none;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="gcalConnect()">Connect Google Calendar</button>
+                                    <button id="gcalRefreshBtnWeek" style="display:none;background:var(--bg-secondary);color:var(--text-primary);border:1.5px solid var(--border);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="gcalSyncWeek()">↺ Refresh</button>
+                                </div>
+                            </div>
+                            <p id="gcalWeekHint" style="font-size:12px;color:var(--text-secondary);margin:-2px 0 12px;">Straight from your Google Calendar — set it up under Settings → Google Calendar.</p>
+                            <div id="gcalTimetableList"></div>
+                        </div>
+
                         <!-- v70 (Gap 1): recurring commitments — same list/data as the onboarding
                              step, kept editable ongoing since tuition schedules and outings change
                              mid-term, not just once at signup. -->
@@ -9447,6 +9461,29 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                             <div style="font-size:13px;color:var(--text-secondary);">Pick your own colors for light and dark mode.</div>
                         </div>
                         <button class="rl-btn-primary" style="white-space:nowrap;" onclick="apexOpenThemeSettings()">🎨 Customize Theme</button>
+                    </div>
+
+                    <div class="rl-card">
+                        <div class="rl-eyebrow" style="margin-bottom:4px;">Google Calendar</div>
+                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Sign in with your own Google account below so your school's timetable shows up in Week View, styled like the rest of the app. Read-only and one-way — Apex never edits your calendar, and this doesn't change your AI-generated plan.</div>
+                        <div id="gcalClientIdRow" style="margin-bottom:14px;">
+                            <details>
+                                <summary style="font-size:12px;color:var(--text-secondary);cursor:pointer;">Advanced: use a different Google Client ID</summary>
+                                <div style="margin-top:10px;">
+                                    <div style="display:flex;gap:8px;">
+                                        <input type="text" id="gcalClientIdInput" placeholder="xxxxxxxx.apps.googleusercontent.com" style="flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--accent-wash);color:var(--text-primary);font-family:inherit;font-size:13px;box-sizing:border-box;">
+                                        <button class="rl-btn-secondary" style="white-space:nowrap;padding:9px 16px;font-size:12.5px;" onclick="gcalSaveClientId()">Save</button>
+                                    </div>
+                                    <div style="font-size:11.5px;color:var(--text-secondary);margin-top:6px;">Already pre-configured — only touch this if told to point it at a different Google Cloud project. Only a Client ID goes here, never a Client Secret.</div>
+                                </div>
+                            </details>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                            <button id="gcalConnectBtn" class="rl-btn-primary" style="display:none;" onclick="gcalConnect()">Connect Google Calendar</button>
+                            <button id="gcalDisconnectBtn" class="rl-btn-secondary" style="display:none;" onclick="gcalDisconnect()">Disconnect</button>
+                            <button id="gcalRefreshBtn" class="rl-btn-secondary" style="display:none;" onclick="gcalSyncWeek()">↺ Refresh now</button>
+                            <span id="gcalStatus" style="font-size:12.5px;font-weight:700;color:var(--text-secondary);"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -15867,7 +15904,7 @@ ${(s.chapters && s.chapters.length)
             const w = document.getElementById('weekWeekSub');
             if (t) t.style.display = (which === 'today') ? '' : 'none';
             if (w) w.style.display = (which === 'week') ? '' : 'none';
-            if (which === 'week') { autoLoadWeekPlan(); apexRenderCommitmentsList(); }
+            if (which === 'week') { autoLoadWeekPlan(); apexRenderCommitmentsList(); gcalAutoLoadIfConnected(); }
             else { loadTodayTimetableView(); }
         }
         function loadTodayTimetableView() {
@@ -18407,6 +18444,9 @@ ${(s.chapters && s.chapters.length)
             if (prefEl) prefEl.value = studentData.studyPreferences || '';
             const savedEl = document.getElementById('settingsProfileSaved');
             if (savedEl) savedEl.style.display = 'none';
+            const gcalIdEl = document.getElementById('gcalClientIdInput');
+            if (gcalIdEl) gcalIdEl.value = gcalGetClientId();
+            if (typeof gcalRenderSettingsPanel === 'function') gcalRenderSettingsPanel();
         }
 
         function apexSaveSettingsProfile() {
@@ -20442,6 +20482,238 @@ ${(s.chapters && s.chapters.length)
             const weekList = document.getElementById('weekCommitmentsList');
             if (onboardingList) onboardingList.innerHTML = html;
             if (weekList) weekList.innerHTML = html;
+        }
+
+        // ═══ Google Calendar — School Timetable sync. Read-only mirror of the student's own
+        // Google Calendar into Week View, styled in the app's theme via gcalRenderTimetable().
+        // Does NOT feed the AI plan (that's fixedCommitments, above) — purely a display. Uses
+        // Google Identity Services' token client (browser-only OAuth, no backend/client secret
+        // needed) with a Client ID the student pastes into Settings themselves. ═══
+        const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+        // Pre-configured so a student just taps Connect and signs into their own Google account —
+        // no setup step for them. This is a public OAuth Client ID (not a secret; safe to ship in
+        // client-side code — Google's own docs treat it as such). The Settings field lets it be
+        // overridden without a code change if the app ever needs a different one.
+        const GCAL_DEFAULT_CLIENT_ID = '775931342824-diasfmeg6dfne632e7d4dmok2vq41uuv.apps.googleusercontent.com';
+        let _gcalTokenClient = null;
+        let _gcalAccessToken = null;
+        let _gcalTokenExpiresAt = 0;
+
+        function gcalGetClientId() {
+            return localStorage.getItem('gcalClientId') || GCAL_DEFAULT_CLIENT_ID;
+        }
+
+        function gcalIsConnected() {
+            return !!gcalGetClientId() && localStorage.getItem('gcalConnected') === 'true';
+        }
+
+        function gcalLoadScript() {
+            if (window.google && window.google.accounts && window.google.accounts.oauth2) return Promise.resolve();
+            if (window._gcalScriptPromise) return window._gcalScriptPromise;
+            window._gcalScriptPromise = new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://accounts.google.com/gsi/client';
+                s.async = true;
+                s.onload = resolve;
+                s.onerror = () => reject(new Error('Could not load Google\'s sign-in script — check your internet connection.'));
+                document.head.appendChild(s);
+            });
+            return window._gcalScriptPromise;
+        }
+
+        function gcalSaveClientId() {
+            const input = document.getElementById('gcalClientIdInput');
+            if (!input) return;
+            const val = input.value.trim();
+            if (!val) { if (typeof fxToast === 'function') fxToast('Paste your Google OAuth Client ID first'); return; }
+            localStorage.setItem('gcalClientId', val);
+            _gcalTokenClient = null; // rebuild with the new id on next connect
+            if (typeof fxToast === 'function') fxToast('Client ID saved');
+            gcalRenderSettingsPanel();
+        }
+
+        async function gcalEnsureTokenClient() {
+            const clientId = gcalGetClientId();
+            if (!clientId) throw new Error('NO_CLIENT_ID');
+            await gcalLoadScript();
+            if (!_gcalTokenClient) {
+                _gcalTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: GCAL_SCOPE,
+                    callback: () => {} // set per-request in gcalRequestToken
+                });
+            }
+            return _gcalTokenClient;
+        }
+
+        function gcalRequestToken(promptMode) {
+            return new Promise((resolve, reject) => {
+                gcalEnsureTokenClient().then(client => {
+                    client.callback = (resp) => {
+                        if (resp && resp.access_token) {
+                            _gcalAccessToken = resp.access_token;
+                            _gcalTokenExpiresAt = Date.now() + ((resp.expires_in || 3600) - 60) * 1000;
+                            resolve(resp.access_token);
+                        } else {
+                            reject(new Error((resp && resp.error) || 'No access token returned'));
+                        }
+                    };
+                    client.requestAccessToken({ prompt: promptMode });
+                }).catch(reject);
+            });
+        }
+
+        async function gcalGetValidToken(interactive) {
+            if (_gcalAccessToken && Date.now() < _gcalTokenExpiresAt) return _gcalAccessToken;
+            return gcalRequestToken(interactive ? 'consent' : '');
+        }
+
+        async function gcalConnect() {
+            if (!gcalGetClientId()) { if (typeof fxToast === 'function') fxToast('Add your Google OAuth Client ID in Settings first'); return; }
+            try {
+                await gcalRequestToken('consent');
+                localStorage.setItem('gcalConnected', 'true');
+                if (typeof fxToast === 'function') fxToast('Google Calendar connected');
+                gcalRenderSettingsPanel();
+                await gcalSyncWeek();
+            } catch (e) {
+                console.error('[gcal] connect failed', e);
+                if (typeof fxToast === 'function') fxToast('Could not connect to Google Calendar');
+            }
+        }
+
+        function gcalDisconnect() {
+            if (_gcalAccessToken && window.google && google.accounts && google.accounts.oauth2) {
+                try { google.accounts.oauth2.revoke(_gcalAccessToken, () => {}); } catch (e) { /* noop */ }
+            }
+            _gcalAccessToken = null;
+            _gcalTokenExpiresAt = 0;
+            localStorage.removeItem('gcalConnected');
+            gcalRenderSettingsPanel();
+            gcalRenderTimetable([]);
+            if (typeof fxToast === 'function') fxToast('Google Calendar disconnected');
+        }
+
+        function gcalWeekRange() {
+            const now = new Date();
+            const day = now.getDay(); // 0=Sun..6=Sat
+            const diffToMon = (day === 0) ? -6 : 1 - day;
+            const monday = new Date(now); monday.setHours(0, 0, 0, 0); monday.setDate(monday.getDate() + diffToMon);
+            const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23, 59, 59, 999);
+            return { start: monday, end: sunday };
+        }
+
+        async function gcalSyncWeek() {
+            if (!gcalIsConnected()) return;
+            const list = document.getElementById('gcalTimetableList');
+            if (list) list.innerHTML = '<div class="ds-skeleton" style="height:60px;border-radius:12px;"></div>';
+            let token;
+            try {
+                token = await gcalGetValidToken(false);
+            } catch (e) {
+                console.warn('[gcal] silent token refresh failed', e);
+                localStorage.removeItem('gcalConnected');
+                gcalRenderSettingsPanel();
+                if (list) list.innerHTML = '<div style="font-size:12.5px;color:var(--text-secondary);text-align:center;padding:8px 0;">Your Google session expired — tap Connect to reconnect.</div>';
+                return;
+            }
+            try {
+                const { start, end } = gcalWeekRange();
+                const events = await gcalFetchAllEvents(token, start, end);
+                gcalRenderTimetable(events);
+            } catch (e) {
+                console.error('[gcal] sync failed', e);
+                if (list) list.innerHTML = '<div style="font-size:12.5px;color:var(--text-secondary);text-align:center;padding:8px 0;">Could not load your calendar. Tap Refresh to try again.</div>';
+            }
+        }
+
+        // A school timetable is usually a separate calendar the student has subscribed to
+        // ("Other calendars" in Google Calendar), not their primary one — pulling only
+        // /calendars/primary/events would silently show nothing for that common case. Fetches
+        // every calendar visible in the student's own Google Calendar UI and merges the results.
+        async function gcalFetchAllEvents(token, start, end) {
+            const calRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=freeBusyReader', { headers: { Authorization: 'Bearer ' + token } });
+            if (!calRes.ok) throw new Error('Google Calendar API error: ' + calRes.status);
+            const calData = await calRes.json();
+            const calendars = (calData.items || []).filter(c => c.selected !== false);
+            const fetches = calendars.map(cal => {
+                const url = new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events`);
+                url.searchParams.set('timeMin', start.toISOString());
+                url.searchParams.set('timeMax', end.toISOString());
+                url.searchParams.set('singleEvents', 'true');
+                url.searchParams.set('orderBy', 'startTime');
+                url.searchParams.set('maxResults', '250');
+                return fetch(url.toString(), { headers: { Authorization: 'Bearer ' + token } })
+                    .then(r => r.ok ? r.json() : { items: [] })
+                    .then(d => d.items || [])
+                    .catch(() => []);
+            });
+            const results = await Promise.all(fetches);
+            return results.flat();
+        }
+
+        function gcalRenderTimetable(events) {
+            const list = document.getElementById('gcalTimetableList');
+            if (!list) return;
+            if (!gcalIsConnected()) { list.innerHTML = ''; return; }
+            if (!events.length) {
+                list.innerHTML = '<div style="font-size:12.5px;color:var(--text-secondary);text-align:center;padding:8px 0;">Nothing on your Google Calendar this week.</div>';
+                return;
+            }
+            const dayFmt = { weekday: 'short', month: 'short', day: 'numeric' };
+            const timeFmt = { hour: 'numeric', minute: '2-digit' };
+            const eventStart = ev => new Date(ev.start && (ev.start.dateTime || ev.start.date) || 0).getTime();
+            const sorted = [...events].filter(ev => ev.start && (ev.start.dateTime || ev.start.date)).sort((a, b) => eventStart(a) - eventStart(b));
+            const groups = new Map();
+            sorted.forEach(ev => {
+                const key = new Date(ev.start.dateTime || ev.start.date).toDateString();
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(ev);
+            });
+            let html = '';
+            for (const [key, dayEvents] of groups) {
+                const label = new Date(key).toLocaleDateString(undefined, dayFmt);
+                html += `<div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 6px;">${label}</div>`;
+                html += dayEvents.map(ev => {
+                    const allDay = !ev.start.dateTime;
+                    const timeLabel = allDay ? 'All day' :
+                        new Date(ev.start.dateTime).toLocaleTimeString(undefined, timeFmt) + '–' + new Date(ev.end.dateTime).toLocaleTimeString(undefined, timeFmt);
+                    const title = String(ev.summary || 'Untitled').replace(/</g, '&lt;');
+                    const loc = ev.location ? ' · ' + String(ev.location).replace(/</g, '&lt;') : '';
+                    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;background:var(--bg-secondary);margin-bottom:8px;">
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:700;color:var(--text-primary);">${title}</div>
+                            <div style="font-size:11.5px;color:var(--text-secondary);margin-top:1px;">${timeLabel}${loc}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+            list.innerHTML = html;
+        }
+
+        function gcalRenderSettingsPanel() {
+            const hasClientId = !!gcalGetClientId();
+            const connected = gcalIsConnected();
+            const statusEl = document.getElementById('gcalStatus');
+            if (statusEl) statusEl.textContent = connected ? 'Connected ✓' : (hasClientId ? 'Not connected' : 'Add your Client ID above to connect');
+            const clientIdRow = document.getElementById('gcalClientIdRow');
+            if (clientIdRow) clientIdRow.style.display = connected ? 'none' : '';
+            const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+            show('gcalConnectBtn', hasClientId && !connected);
+            show('gcalDisconnectBtn', connected);
+            show('gcalRefreshBtn', connected);
+            show('gcalConnectBtnWeek', hasClientId && !connected);
+            show('gcalRefreshBtnWeek', connected);
+            const hint = document.getElementById('gcalWeekHint');
+            if (hint) hint.textContent = connected
+                ? 'Straight from your Google Calendar — tap Refresh to pull in the latest changes.'
+                : (hasClientId ? 'Connect your Google account to see your school timetable here.' : 'Set this up under Settings → Google Calendar to see your school timetable here.');
+        }
+
+        function gcalAutoLoadIfConnected() {
+            gcalRenderSettingsPanel();
+            if (gcalIsConnected()) gcalSyncWeek();
+            else gcalRenderTimetable([]);
         }
 
         // v72: replaces the native <input type="time"> on Commitments/Homework Break — the

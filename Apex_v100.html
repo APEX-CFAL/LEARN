@@ -13537,6 +13537,8 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             apexAccountBackToNickname();
             const input = document.getElementById('accountNicknameInput');
             if (input) setTimeout(() => input.focus(), 50);
+            _gsiIntent = 'signin';
+            gsiRenderButtons();
         }
         function hideAccountScreen() {
             const s1 = document.getElementById('step1');
@@ -13590,6 +13592,8 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             apexChooseBackToNickname();
             const input = document.getElementById('chooseNicknameInput');
             if (input) setTimeout(() => input.focus(), 50);
+            _gsiIntent = 'choose';
+            gsiRenderButtons();
         }
         function hideChooseNicknameScreen() {
             const s1 = document.getElementById('step1');

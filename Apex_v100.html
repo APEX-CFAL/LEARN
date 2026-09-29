@@ -8386,20 +8386,6 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                             <div id="gcalTimetableList"></div>
                         </div>
 
-                        <!-- Google Calendar — read-only mirror of the student's own school timetable,
-                             styled in the app's theme. Doesn't touch AI plan generation. -->
-                        <div style="margin-top:24px;padding-top:20px;border-top:1.5px solid var(--border);">
-                            <div class="home-header-row" style="margin-bottom:6px;">
-                                <div class="home-today-label" style="font-size:15px;">🏫 School Timetable</div>
-                                <div style="display:flex;align-items:center;gap:8px;">
-                                    <button id="gcalConnectBtnWeek" style="display:none;background:var(--accent);color:var(--btn-text);border:none;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="gcalConnect()">Connect Google Calendar</button>
-                                    <button id="gcalRefreshBtnWeek" style="display:none;background:var(--bg-secondary);color:var(--text-primary);border:1.5px solid var(--border);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="gcalSyncWeek()">↺ Refresh</button>
-                                </div>
-                            </div>
-                            <p id="gcalWeekHint" style="font-size:12px;color:var(--text-secondary);margin:-2px 0 12px;">Straight from your Google Calendar — set it up under Settings → Google Calendar.</p>
-                            <div id="gcalTimetableList"></div>
-                        </div>
-
                         <!-- v70 (Gap 1): recurring commitments — same list/data as the onboarding
                              step, kept editable ongoing since tuition schedules and outings change
                              mid-term, not just once at signup. -->
@@ -9466,16 +9452,12 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                         <div class="rl-eyebrow" style="margin-bottom:4px;">Google Calendar</div>
                         <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Sign in with your own Google account below so your school's timetable shows up in Week View, styled like the rest of the app. Read-only and one-way — Apex never edits your calendar, and this doesn't change your AI-generated plan.</div>
                         <div id="gcalClientIdRow" style="margin-bottom:14px;">
-                            <details>
-                                <summary style="font-size:12px;color:var(--text-secondary);cursor:pointer;">Advanced: use a different Google Client ID</summary>
-                                <div style="margin-top:10px;">
-                                    <div style="display:flex;gap:8px;">
-                                        <input type="text" id="gcalClientIdInput" placeholder="xxxxxxxx.apps.googleusercontent.com" style="flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--accent-wash);color:var(--text-primary);font-family:inherit;font-size:13px;box-sizing:border-box;">
-                                        <button class="rl-btn-secondary" style="white-space:nowrap;padding:9px 16px;font-size:12.5px;" onclick="gcalSaveClientId()">Save</button>
-                                    </div>
-                                    <div style="font-size:11.5px;color:var(--text-secondary);margin-top:6px;">Already pre-configured — only touch this if told to point it at a different Google Cloud project. Only a Client ID goes here, never a Client Secret.</div>
-                                </div>
-                            </details>
+                            <label for="gcalClientIdInput" style="display:block;font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">Google OAuth Client ID</label>
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" id="gcalClientIdInput" placeholder="xxxxxxxx.apps.googleusercontent.com" style="flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--accent-wash);color:var(--text-primary);font-family:inherit;font-size:13px;box-sizing:border-box;">
+                                <button class="rl-btn-secondary" style="white-space:nowrap;padding:9px 16px;font-size:12.5px;" onclick="gcalSaveClientId()">Save</button>
+                            </div>
+                            <div style="font-size:11.5px;color:var(--text-secondary);margin-top:6px;">One-time setup from your Google Cloud project's Credentials page. Only the Client ID goes here — never a Client Secret.</div>
                         </div>
                         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                             <button id="gcalConnectBtn" class="rl-btn-primary" style="display:none;" onclick="gcalConnect()">Connect Google Calendar</button>
@@ -20489,17 +20471,17 @@ ${(s.chapters && s.chapters.length)
         // Google Identity Services' token client (browser-only OAuth, no backend/client secret
         // needed) with a Client ID the student pastes into Settings themselves. ═══
         const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
-        // Pre-configured so a student just taps Connect and signs into their own Google account —
-        // no setup step for them. This is a public OAuth Client ID (not a secret; safe to ship in
-        // client-side code — Google's own docs treat it as such). The Settings field lets it be
-        // overridden without a code change if the app ever needs a different one.
-        const GCAL_DEFAULT_CLIENT_ID = '775931342824-diasfmeg6dfne632e7d4dmok2vq41uuv.apps.googleusercontent.com';
+        // No default Client ID shipped here — it's entered once in Settings, since it's tied to
+        // whichever Google Cloud project is currently set up (this gets swapped when the project
+        // does). Not a secret either way — this is a public OAuth Client ID, safe to store in
+        // localStorage/paste into the page — but it has to match a real, currently-configured
+        // Google Cloud project or every sign-in attempt fails.
         let _gcalTokenClient = null;
         let _gcalAccessToken = null;
         let _gcalTokenExpiresAt = 0;
 
         function gcalGetClientId() {
-            return localStorage.getItem('gcalClientId') || GCAL_DEFAULT_CLIENT_ID;
+            return localStorage.getItem('gcalClientId') || '';
         }
 
         function gcalIsConnected() {

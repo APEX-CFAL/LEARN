@@ -9450,14 +9450,18 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
 
                     <div class="rl-card">
                         <div class="rl-eyebrow" style="margin-bottom:4px;">Google Calendar</div>
-                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Sign in with your own Google account below so your school's timetable shows up in Week View, styled like the rest of the app. Read-only and one-way — Apex never edits your calendar, and this doesn't change your AI-generated plan.</div>
+                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Connect your Google account so your school's timetable shows up in Week View, styled like the rest of the app. Read-only and one-way — Apex never edits your calendar, and this doesn't change your AI-generated plan.</div>
                         <div id="gcalClientIdRow" style="margin-bottom:14px;">
-                            <label for="gcalClientIdInput" style="display:block;font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">Google OAuth Client ID</label>
-                            <div style="display:flex;gap:8px;">
-                                <input type="text" id="gcalClientIdInput" placeholder="xxxxxxxx.apps.googleusercontent.com" style="flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--accent-wash);color:var(--text-primary);font-family:inherit;font-size:13px;box-sizing:border-box;">
-                                <button class="rl-btn-secondary" style="white-space:nowrap;padding:9px 16px;font-size:12.5px;" onclick="gcalSaveClientId()">Save</button>
-                            </div>
-                            <div style="font-size:11.5px;color:var(--text-secondary);margin-top:6px;">One-time setup from your Google Cloud project's Credentials page. Only the Client ID goes here — never a Client Secret.</div>
+                            <details>
+                                <summary style="font-size:12px;color:var(--text-secondary);cursor:pointer;">Advanced: use a different Google Client ID</summary>
+                                <div style="margin-top:10px;">
+                                    <div style="display:flex;gap:8px;">
+                                        <input type="text" id="gcalClientIdInput" placeholder="xxxxxxxx.apps.googleusercontent.com" style="flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--accent-wash);color:var(--text-primary);font-family:inherit;font-size:13px;box-sizing:border-box;">
+                                        <button class="rl-btn-secondary" style="white-space:nowrap;padding:9px 16px;font-size:12.5px;" onclick="gcalSaveClientId()">Save</button>
+                                    </div>
+                                    <div style="font-size:11.5px;color:var(--text-secondary);margin-top:6px;">Already pre-configured — only touch this if told to point it at a different Google Cloud project. Only a Client ID goes here, never a Client Secret.</div>
+                                </div>
+                            </details>
                         </div>
                         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                             <button id="gcalConnectBtn" class="rl-btn-primary" style="display:none;" onclick="gcalConnect()">Connect Google Calendar</button>
@@ -20471,17 +20475,18 @@ ${(s.chapters && s.chapters.length)
         // Google Identity Services' token client (browser-only OAuth, no backend/client secret
         // needed) with a Client ID the student pastes into Settings themselves. ═══
         const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
-        // No default Client ID shipped here — it's entered once in Settings, since it's tied to
-        // whichever Google Cloud project is currently set up (this gets swapped when the project
-        // does). Not a secret either way — this is a public OAuth Client ID, safe to store in
-        // localStorage/paste into the page — but it has to match a real, currently-configured
-        // Google Cloud project or every sign-in attempt fails.
+        // Pre-configured so a student just taps Connect and signs into their own Google account —
+        // no setup step for them. This is a public OAuth Client ID (not a secret; safe to ship in
+        // client-side code — Google's own docs treat it as such). The Settings field lets it be
+        // overridden without a code change if the app ever needs to point at a different Google
+        // Cloud project again.
+        const GCAL_DEFAULT_CLIENT_ID = '306395957845-a38vdduppateb84aj17kop9soc2up50h.apps.googleusercontent.com';
         let _gcalTokenClient = null;
         let _gcalAccessToken = null;
         let _gcalTokenExpiresAt = 0;
 
         function gcalGetClientId() {
-            return localStorage.getItem('gcalClientId') || '';
+            return localStorage.getItem('gcalClientId') || GCAL_DEFAULT_CLIENT_ID;
         }
 
         function gcalIsConnected() {

@@ -8386,6 +8386,20 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                             <div id="gcalTimetableList"></div>
                         </div>
 
+                        <!-- Google Calendar — read-only mirror of the student's own school timetable,
+                             styled in the app's theme. Doesn't touch AI plan generation. -->
+                        <div style="margin-top:24px;padding-top:20px;border-top:1.5px solid var(--border);">
+                            <div class="home-header-row" style="margin-bottom:6px;">
+                                <div class="home-today-label" style="font-size:15px;">🏫 School Timetable</div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <button id="gcalConnectBtnWeek" style="display:none;background:var(--accent);color:var(--btn-text);border:none;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="gcalConnect()">Connect Google Calendar</button>
+                                    <button id="gcalRefreshBtnWeek" style="display:none;background:var(--bg-secondary);color:var(--text-primary);border:1.5px solid var(--border);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="gcalSyncWeek()">↺ Refresh</button>
+                                </div>
+                            </div>
+                            <p id="gcalWeekHint" style="font-size:12px;color:var(--text-secondary);margin:-2px 0 12px;">Straight from your Google Calendar — set it up under Settings → Google Calendar.</p>
+                            <div id="gcalTimetableList"></div>
+                        </div>
+
                         <!-- v70 (Gap 1): recurring commitments — same list/data as the onboarding
                              step, kept editable ongoing since tuition schedules and outings change
                              mid-term, not just once at signup. -->

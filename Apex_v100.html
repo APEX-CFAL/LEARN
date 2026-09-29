@@ -8365,27 +8365,26 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                         <div class="home-header-row" style="margin-bottom: 20px;">
                             <div>
                                 <div class="home-today-label">This Week</div>
-                                <div class="home-progress-counter" id="weekSubjectSummary">Tap ↺ to generate</div>
+                                <div class="home-progress-counter">Your school timetable, synced from Google Calendar</div>
                             </div>
                             <div style="display:flex;gap:8px;">
                                 <button onclick="showWeekSubview('today')" style="background:var(--bg-secondary);color:var(--text-primary);border:2px solid var(--border);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">← Today</button>
-                                <button onclick="refreshWeekPlan()" style="background:var(--accent);color:var(--btn-text);border:none;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">↺ Generate</button>
                             </div>
                         </div>
 
-                        <!-- Subject hours summary bar (keep color coding) -->
-                        <!-- v47: Adaptive disclaimer — student must know the week view isn't fixed -->
-                        <div style="background:var(--c-bg-2, var(--bg-secondary));border:1.5px solid var(--c-border, var(--border));border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;">
-                            <div style="font-size:16px;flex-shrink:0;margin-top:1px;">🔄</div>
-                            <div style="font-size:12px;color:var(--c-text-2, var(--text-secondary));line-height:1.5;">This is your <strong style="color:var(--c-text-1, var(--text-primary));">projected</strong> week — not a fixed schedule. Your plan adapts every day based on how you perform, what you complete, and how you're feeling. Trust the process.</div>
+                        <!-- Google Calendar — read-only mirror of the student's own school timetable,
+                             styled in the app's theme. Doesn't touch AI plan generation. -->
+                        <div style="margin-top:24px;padding-top:20px;border-top:1.5px solid var(--border);">
+                            <div class="home-header-row" style="margin-bottom:6px;">
+                                <div class="home-today-label" style="font-size:15px;">🏫 School Timetable</div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <button id="gcalConnectBtnWeek" style="display:none;background:var(--accent);color:var(--btn-text);border:none;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="gcalConnect()">Connect Google Calendar</button>
+                                    <button id="gcalRefreshBtnWeek" style="display:none;background:var(--bg-secondary);color:var(--text-primary);border:1.5px solid var(--border);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="gcalSyncWeek()">↺ Refresh</button>
+                                </div>
+                            </div>
+                            <p id="gcalWeekHint" style="font-size:12px;color:var(--text-secondary);margin:-2px 0 12px;">Straight from your Google Calendar — set it up under Settings → Google Calendar.</p>
+                            <div id="gcalTimetableList"></div>
                         </div>
-                        <div id="weekSubjectBars" style="margin-bottom: 24px;"></div>
-
-                        <!-- Mon-Sun day tabs -->
-                        <div id="weekDayTabs" style="display:flex;gap:8px;margin-bottom:18px;overflow-x:auto;overflow-y:visible;padding:6px 4px 8px 4px;scrollbar-width:thin;"></div>
-
-                        <!-- Day detail view -->
-                        <div id="weekDayDetail" class="fx-slide-container"></div>
 
                         <!-- Google Calendar — read-only mirror of the student's own school timetable,
                              styled in the app's theme. Doesn't touch AI plan generation. -->
@@ -15904,7 +15903,7 @@ ${(s.chapters && s.chapters.length)
             const w = document.getElementById('weekWeekSub');
             if (t) t.style.display = (which === 'today') ? '' : 'none';
             if (w) w.style.display = (which === 'week') ? '' : 'none';
-            if (which === 'week') { autoLoadWeekPlan(); apexRenderCommitmentsList(); gcalAutoLoadIfConnected(); }
+            if (which === 'week') { apexRenderCommitmentsList(); gcalAutoLoadIfConnected(); }
             else { loadTodayTimetableView(); }
         }
         function loadTodayTimetableView() {

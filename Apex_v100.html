@@ -7776,12 +7776,11 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                  the numbered step1..step9 flow so it never needs renumbering. -->
             <div class="step" id="stepAccount">
                 <h1 style="font-size:32px;">Welcome back</h1>
-                <p class="subtitle">Enter your nickname and password to pick up where you left off.</p>
+                <p class="subtitle">Enter your nickname, then sign in with Google to pick up where you left off.</p>
                 <input type="text" id="accountNicknameInput" class="owg-account-input" placeholder="Your nickname" maxlength="24" autocomplete="username">
-                <input type="password" id="accountPasswordInput" class="owg-account-input" placeholder="Your password" maxlength="64" autocomplete="current-password" onkeydown="if(event.key==='Enter')apexTryNicknameSignIn()">
                 <div id="accountNicknameNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
                 <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
-                    <button class="ds-btn ds-btn-primary ds-btn-lg" onclick="apexTryNicknameSignIn()">Continue</button>
+                    <div id="googleSignInBtnAccount" style="min-height:44px;"></div>
                     <button class="owg-back-link" onclick="hideAccountScreen()">← Back</button>
                 </div>
             </div>
@@ -7792,13 +7791,11 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                  outside the numbered step1..step9 flow so it never needs renumbering. -->
             <div class="step" id="stepChooseNickname">
                 <h1 style="font-size:32px;">Pick a nickname</h1>
-                <p class="subtitle">This is how you'll sign back in on another device later — letters, numbers, and underscores only. Also set a password so only you can sign in as you.</p>
+                <p class="subtitle">This is how you'll sign back in on another device later — letters, numbers, and underscores only. Then sign in with Google so only you can access this account.</p>
                 <input type="text" id="chooseNicknameInput" class="owg-account-input" placeholder="Your nickname" maxlength="24" autocomplete="username">
-                <input type="password" id="choosePasswordInput" class="owg-account-input" placeholder="Create a password (6+ characters)" maxlength="64" autocomplete="new-password">
-                <input type="password" id="choosePasswordConfirmInput" class="owg-account-input" placeholder="Confirm password" maxlength="64" autocomplete="new-password" onkeydown="if(event.key==='Enter')apexClaimNickname()">
                 <div id="chooseNicknameNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
                 <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
-                    <button class="ds-btn ds-btn-primary ds-btn-lg" id="chooseNicknameBtn" onclick="apexClaimNickname()">Continue</button>
+                    <div id="googleSignInBtnChoose" style="min-height:44px;"></div>
                     <button class="owg-back-link" onclick="hideChooseNicknameScreen()">← Back</button>
                 </div>
             </div>
@@ -13514,6 +13511,8 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             if (bar) bar.style.display = 'none';
             const input = document.getElementById('accountNicknameInput');
             if (input) setTimeout(() => input.focus(), 50);
+            _gsiIntent = 'signin';
+            gsiRenderButtons();
         }
         function hideAccountScreen() {
             const s1 = document.getElementById('step1');
@@ -13534,6 +13533,8 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             if (bar) bar.style.display = 'none';
             const input = document.getElementById('chooseNicknameInput');
             if (input) setTimeout(() => input.focus(), 50);
+            _gsiIntent = 'choose';
+            gsiRenderButtons();
         }
         function hideChooseNicknameScreen() {
             const s1 = document.getElementById('step1');
@@ -13642,46 +13643,74 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             window.scrollTo(0, 0);
         }
 
-        // Password hashing (Web Crypto SHA-256, salted) — not full Firebase Auth, but the
-        // account's password is never stored or transmitted in plaintext. Salt is per-account,
-        // generated once at signup and stored alongside the hash.
-        function apexGenSalt() {
-            const arr = new Uint8Array(16);
-            crypto.getRandomValues(arr);
-            return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-        async function apexHashPassword(password, salt) {
-            const bytes = new TextEncoder().encode(salt + ':' + password);
-            const digest = await crypto.subtle.digest('SHA-256', bytes);
-            return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+        // ═══ Google Sign-In (identity) — replaces the old nickname+password credential with the
+        // student's own Google account. Reuses the Calendar feature's OAuth Client ID/script
+        // loader (gcalGetClientId/gcalLoadScript) since both are the same Google Identity Services
+        // setup; this half uses google.accounts.id (Sign In With Google, an ID token proving who
+        // signed in) rather than google.accounts.oauth2 (an access token for calling an API) —
+        // the right tool for "who is this" instead of "let me read your Calendar". No backend to
+        // verify the token's signature against, so this is the same client-side trust level the
+        // old password check already had — not a security regression, just a different credential.
+        let _gsiIntent = null;   // 'choose' (new account) | 'signin' (returning) — set by the
+                                  // screen that's currently shown, read inside the one shared
+                                  // callback below since renderButton() takes no per-button callback.
+        let _gsiChooseProfile = null;
+        let _gsiAccountProfile = null;
+        let _gsiInitialized = false;
+
+        function gsiDecodeJwt(token) {
+            try {
+                const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+                const json = decodeURIComponent(atob(payload).split('').map(c =>
+                    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                ).join(''));
+                return JSON.parse(json);
+            } catch (e) { return null; }
         }
 
-        // New account: validate + claim a nickname and password, this device becomes primary.
+        function gsiRenderButtons() {
+            const clientId = gcalGetClientId();
+            if (!clientId) return;
+            gcalLoadScript().then(() => {
+                if (!window.google || !google.accounts || !google.accounts.id) return;
+                if (!_gsiInitialized) {
+                    google.accounts.id.initialize({
+                        client_id: clientId,
+                        callback: (resp) => {
+                            const profile = gsiDecodeJwt(resp.credential);
+                            if (!profile || !profile.email) return;
+                            if (_gsiIntent === 'choose') { _gsiChooseProfile = profile; apexClaimNickname(); }
+                            else { _gsiAccountProfile = profile; apexTryNicknameSignIn(); }
+                        }
+                    });
+                    _gsiInitialized = true;
+                }
+                const chooseEl = document.getElementById('googleSignInBtnChoose');
+                const accountEl = document.getElementById('googleSignInBtnAccount');
+                if (chooseEl && !chooseEl.dataset.rendered) { google.accounts.id.renderButton(chooseEl, { theme: 'outline', size: 'large', width: 300 }); chooseEl.dataset.rendered = '1'; }
+                if (accountEl && !accountEl.dataset.rendered) { google.accounts.id.renderButton(accountEl, { theme: 'outline', size: 'large', width: 300 }); accountEl.dataset.rendered = '1'; }
+            }).catch(e => console.warn('[gsi] failed to load', e));
+        }
+
+        // New account: validate + claim a nickname, tie it to the Google account that just signed
+        // in, this device becomes primary.
         async function apexClaimNickname() {
             const input = document.getElementById('chooseNicknameInput');
-            const pwInput = document.getElementById('choosePasswordInput');
-            const pwConfirmInput = document.getElementById('choosePasswordConfirmInput');
             const notice = document.getElementById('chooseNicknameNotice');
-            const btn = document.getElementById('chooseNicknameBtn');
             const raw = input ? input.value.trim() : '';
             const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
-            const password = pwInput ? pwInput.value : '';
-            const passwordConfirm = pwConfirmInput ? pwConfirmInput.value : '';
             if (!key || key.length < 2) { if (notice) notice.textContent = 'Pick a nickname at least 2 characters long.'; return; }
-            if (!password || password.length < 6) { if (notice) notice.textContent = 'Password must be at least 6 characters.'; return; }
-            if (password !== passwordConfirm) { if (notice) notice.textContent = "Passwords don't match."; return; }
+            if (!_gsiChooseProfile) { if (notice) notice.textContent = 'Tap "Sign in with Google" above to continue.'; return; }
+            const profile = _gsiChooseProfile;
 
-            if (notice) notice.textContent = '';
-            if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+            if (notice) notice.textContent = 'Checking…';
             try {
                 const existing = await apexFb.get('apex/users/' + key + '/meta');
                 if (existing) { if (notice) notice.textContent = "That nickname's taken — try another."; return; }
 
                 const deviceId = apexDeviceId();
                 const now = Date.now();
-                const passwordSalt = apexGenSalt();
-                const passwordHash = await apexHashPassword(password, passwordSalt);
-                await apexFb.set('apex/users/' + key + '/meta', { createdAt: now, primaryDeviceId: deviceId, primaryClaimedAt: now, lastActiveAt: now, passwordSalt, passwordHash });
+                await apexFb.set('apex/users/' + key + '/meta', { createdAt: now, primaryDeviceId: deviceId, primaryClaimedAt: now, lastActiveAt: now, googleEmail: profile.email, googleName: profile.name || '' });
                 // Re-check: another device may have claimed the same nickname in the gap between
                 // our read above and this write landing. Best-effort, not atomic — acceptable
                 // since nickname-only accounts don't have stronger guarantees anywhere else either.
@@ -13696,13 +13725,12 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                 if (prevKey && prevKey !== key) apexClearLocalUserState();
                 localStorage.setItem('apexNickname', key);
                 localStorage.setItem('apexPrimaryDeviceId', deviceId);
+                _gsiChooseProfile = null;
                 hideChooseNicknameScreen();
                 goToProgramChoice();
             } catch (e) {
                 console.warn('[apexClaimNickname]', e);
                 if (notice) notice.textContent = 'Could not reach the server — check your connection and try again.';
-            } finally {
-                if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
             }
         }
 
@@ -13721,24 +13749,24 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         // an unusual case and the user asked for the choice to go away entirely.
         async function apexTryNicknameSignIn() {
             const input = document.getElementById('accountNicknameInput');
-            const pwInput = document.getElementById('accountPasswordInput');
             const notice = document.getElementById('accountNicknameNotice');
-            const btn = document.querySelector('#stepAccount .ds-btn-primary');
             const raw = input ? input.value.trim() : '';
             const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
-            const password = pwInput ? pwInput.value : '';
             if (!key) { if (notice) notice.textContent = 'Enter a nickname first.'; return; }
-            if (!password) { if (notice) notice.textContent = 'Enter your password.'; return; }
+            if (!_gsiAccountProfile) { if (notice) notice.textContent = 'Tap "Sign in with Google" above to continue.'; return; }
+            const profile = _gsiAccountProfile;
 
-            if (notice) notice.textContent = '';
-            if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+            if (notice) notice.textContent = 'Signing in…';
             try {
                 const meta = await apexFb.get('apex/users/' + key + '/meta');
                 if (!meta) { if (notice) notice.textContent = 'No account with that nickname — tap Get Started to create one.'; return; }
 
-                if (meta.passwordHash) {
-                    const hash = await apexHashPassword(password, meta.passwordSalt || '');
-                    if (hash !== meta.passwordHash) { if (notice) notice.textContent = 'Incorrect password.'; return; }
+                // Accounts made before Google Sign-In existed have no googleEmail on file yet —
+                // bind this Google account to it on first sign-in instead of locking them out.
+                // Once set, it's the only thing that can ever sign into this nickname again.
+                if (meta.googleEmail && meta.googleEmail.toLowerCase() !== profile.email.toLowerCase()) {
+                    if (notice) notice.textContent = 'This nickname is linked to a different Google account.';
+                    return;
                 }
 
                 const myDeviceId = apexDeviceId();
@@ -13753,15 +13781,17 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                 if (prevKey && prevKey !== key) apexClearLocalUserState();
                 localStorage.setItem('apexNickname', key);
                 localStorage.setItem('apexPrimaryDeviceId', myDeviceId);
-                if (meta.primaryDeviceId !== myDeviceId) await apexFb.patch('apex/users/' + key + '/meta', { primaryDeviceId: myDeviceId });
+                const metaPatch = {};
+                if (meta.primaryDeviceId !== myDeviceId) metaPatch.primaryDeviceId = myDeviceId;
+                if (!meta.googleEmail) { metaPatch.googleEmail = profile.email; metaPatch.googleName = profile.name || ''; }
+                if (Object.keys(metaPatch).length) await apexFb.patch('apex/users/' + key + '/meta', metaPatch);
+                _gsiAccountProfile = null;
                 await apexHydrateFromCloud();
                 showHomePage();
                 await apexAutoGenerateIfNeeded();
             } catch (e) {
                 console.warn('[apexTryNicknameSignIn]', e);
                 if (notice) notice.textContent = 'Could not reach the server — check your connection and try again.';
-            } finally {
-                if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
             }
         }
         // v70: a fresh sign-in (or just reopening the app on a new day) with no plan generated yet

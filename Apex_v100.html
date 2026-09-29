@@ -7775,13 +7775,24 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             <!-- Account sign-in — nickname entry for returning students. Deliberately outside
                  the numbered step1..step9 flow so it never needs renumbering. -->
             <div class="step" id="stepAccount">
-                <h1 style="font-size:32px;">Welcome back</h1>
-                <p class="subtitle">Enter your nickname, then sign in with Google to pick up where you left off.</p>
-                <input type="text" id="accountNicknameInput" class="owg-account-input" placeholder="Your nickname" maxlength="24" autocomplete="username">
-                <div id="accountNicknameNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
-                <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
-                    <div id="googleSignInBtnAccount" style="min-height:44px;"></div>
-                    <button class="owg-back-link" onclick="hideAccountScreen()">← Back</button>
+                <div id="stepAccountNickPanel">
+                    <h1 style="font-size:32px;">Welcome back</h1>
+                    <p class="subtitle">Enter your nickname to continue.</p>
+                    <input type="text" id="accountNicknameInput" class="owg-account-input" placeholder="Your nickname" maxlength="24" autocomplete="username" onkeydown="if(event.key==='Enter')apexAccountNicknameNext()">
+                    <div id="accountNicknameNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
+                    <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
+                        <button class="ds-btn ds-btn-primary ds-btn-lg" onclick="apexAccountNicknameNext()">Next</button>
+                        <button class="owg-back-link" onclick="hideAccountScreen()">← Back</button>
+                    </div>
+                </div>
+                <div id="stepAccountGooglePanel" style="display:none;">
+                    <h1 style="font-size:32px;">Hi, <span id="accountNicknameConfirm"></span></h1>
+                    <p class="subtitle">Sign in with Google to pick up where you left off.</p>
+                    <div id="accountGoogleNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
+                    <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
+                        <div id="googleSignInBtnAccount" style="min-height:44px;"></div>
+                        <button class="owg-back-link" onclick="apexAccountBackToNickname()">← Back</button>
+                    </div>
                 </div>
             </div>
 
@@ -7790,13 +7801,24 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                  Same visual pattern as #stepAccount above (its matched pair) and same reasoning:
                  outside the numbered step1..step9 flow so it never needs renumbering. -->
             <div class="step" id="stepChooseNickname">
-                <h1 style="font-size:32px;">Pick a nickname</h1>
-                <p class="subtitle">This is how you'll sign back in on another device later — letters, numbers, and underscores only. Then sign in with Google so only you can access this account.</p>
-                <input type="text" id="chooseNicknameInput" class="owg-account-input" placeholder="Your nickname" maxlength="24" autocomplete="username">
-                <div id="chooseNicknameNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
-                <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
-                    <div id="googleSignInBtnChoose" style="min-height:44px;"></div>
-                    <button class="owg-back-link" onclick="hideChooseNicknameScreen()">← Back</button>
+                <div id="stepChooseNickPanel">
+                    <h1 style="font-size:32px;">Pick a nickname</h1>
+                    <p class="subtitle">This is how you'll sign back in on another device later — letters, numbers, and underscores only.</p>
+                    <input type="text" id="chooseNicknameInput" class="owg-account-input" placeholder="Your nickname" maxlength="24" autocomplete="username" onkeydown="if(event.key==='Enter')apexChooseNicknameNext()">
+                    <div id="chooseNicknameNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
+                    <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
+                        <button class="ds-btn ds-btn-primary ds-btn-lg" onclick="apexChooseNicknameNext()">Next</button>
+                        <button class="owg-back-link" onclick="hideChooseNicknameScreen()">← Back</button>
+                    </div>
+                </div>
+                <div id="stepChooseGooglePanel" style="display:none;">
+                    <h1 style="font-size:32px;">Hi, <span id="chooseNicknameConfirm"></span></h1>
+                    <p class="subtitle">Sign in with Google so only you can access this account.</p>
+                    <div id="chooseGoogleNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
+                    <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
+                        <div id="googleSignInBtnChoose" style="min-height:44px;"></div>
+                        <button class="owg-back-link" onclick="apexChooseBackToNickname()">← Back</button>
+                    </div>
                 </div>
             </div>
 
@@ -13502,6 +13524,9 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         }
 
         // ── v65: sign-in (existing account) + nickname-claim (new account) screens ──────
+        // v107: each is two sub-panels — pick/enter the nickname first, THEN (a separate page,
+        // not a field alongside a password) sign in with Google, which self-continues into the
+        // app the moment Google hands back a credential. No manual "Continue" click after that.
         function showAccountScreen() {
             const s1 = document.getElementById('step1');
             const acc = document.getElementById('stepAccount');
@@ -13509,6 +13534,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             if (acc) acc.classList.add('active');
             const bar = document.querySelector('#onboardingPage .progress-bar');
             if (bar) bar.style.display = 'none';
+            apexAccountBackToNickname();
             const input = document.getElementById('accountNicknameInput');
             if (input) setTimeout(() => input.focus(), 50);
             _gsiIntent = 'signin';
@@ -13524,6 +13550,38 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             const notice = document.getElementById('accountNicknameNotice');
             if (notice) notice.textContent = '';
         }
+        // Nickname panel -> validates the nickname actually exists, THEN reveals the Google
+        // sign-in panel (catches a typo'd/unknown nickname before sending them through Google).
+        async function apexAccountNicknameNext() {
+            const input = document.getElementById('accountNicknameInput');
+            const notice = document.getElementById('accountNicknameNotice');
+            const raw = input ? input.value.trim() : '';
+            const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            if (!key) { if (notice) notice.textContent = 'Enter a nickname first.'; return; }
+            if (notice) notice.textContent = 'Checking…';
+            try {
+                const meta = await apexFb.get('apex/users/' + key + '/meta');
+                if (!meta) { if (notice) notice.textContent = 'No account with that nickname — tap Get Started to create one.'; return; }
+                if (notice) notice.textContent = '';
+                const confirmEl = document.getElementById('accountNicknameConfirm');
+                if (confirmEl) confirmEl.textContent = raw;
+                document.getElementById('stepAccountNickPanel').style.display = 'none';
+                document.getElementById('stepAccountGooglePanel').style.display = '';
+                _gsiIntent = 'signin';
+                gsiRenderButtons();
+            } catch (e) {
+                console.warn('[apexAccountNicknameNext]', e);
+                if (notice) notice.textContent = 'Could not reach the server — check your connection and try again.';
+            }
+        }
+        function apexAccountBackToNickname() {
+            const nick = document.getElementById('stepAccountNickPanel');
+            const goog = document.getElementById('stepAccountGooglePanel');
+            if (goog) goog.style.display = 'none';
+            if (nick) nick.style.display = '';
+            const notice = document.getElementById('accountGoogleNotice');
+            if (notice) notice.textContent = '';
+        }
         function showChooseNicknameScreen() {
             const s1 = document.getElementById('step1');
             const cn = document.getElementById('stepChooseNickname');
@@ -13531,6 +13589,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             if (cn) cn.classList.add('active');
             const bar = document.querySelector('#onboardingPage .progress-bar');
             if (bar) bar.style.display = 'none';
+            apexChooseBackToNickname();
             const input = document.getElementById('chooseNicknameInput');
             if (input) setTimeout(() => input.focus(), 50);
             _gsiIntent = 'choose';
@@ -13544,6 +13603,41 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             const bar = document.querySelector('#onboardingPage .progress-bar');
             if (bar) bar.style.display = '';
             const notice = document.getElementById('chooseNicknameNotice');
+            if (notice) notice.textContent = '';
+        }
+        // Nickname panel -> validates it's not already taken, THEN reveals the Google sign-in
+        // panel. apexClaimNickname() still re-checks availability itself right before writing
+        // (a second device could claim the same nickname in the gap while this one is off signing
+        // into Google) — this earlier check is just so a doomed nickname doesn't waste a trip
+        // through the Google popup.
+        async function apexChooseNicknameNext() {
+            const input = document.getElementById('chooseNicknameInput');
+            const notice = document.getElementById('chooseNicknameNotice');
+            const raw = input ? input.value.trim() : '';
+            const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            if (!key || key.length < 2) { if (notice) notice.textContent = 'Pick a nickname at least 2 characters long.'; return; }
+            if (notice) notice.textContent = 'Checking…';
+            try {
+                const existing = await apexFb.get('apex/users/' + key + '/meta');
+                if (existing) { if (notice) notice.textContent = "That nickname's taken — try another."; return; }
+                if (notice) notice.textContent = '';
+                const confirmEl = document.getElementById('chooseNicknameConfirm');
+                if (confirmEl) confirmEl.textContent = raw;
+                document.getElementById('stepChooseNickPanel').style.display = 'none';
+                document.getElementById('stepChooseGooglePanel').style.display = '';
+                _gsiIntent = 'choose';
+                gsiRenderButtons();
+            } catch (e) {
+                console.warn('[apexChooseNicknameNext]', e);
+                if (notice) notice.textContent = 'Could not reach the server — check your connection and try again.';
+            }
+        }
+        function apexChooseBackToNickname() {
+            const nick = document.getElementById('stepChooseNickPanel');
+            const goog = document.getElementById('stepChooseGooglePanel');
+            if (goog) goog.style.display = 'none';
+            if (nick) nick.style.display = '';
+            const notice = document.getElementById('chooseGoogleNotice');
             if (notice) notice.textContent = '';
         }
 
@@ -13696,7 +13790,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         // in, this device becomes primary.
         async function apexClaimNickname() {
             const input = document.getElementById('chooseNicknameInput');
-            const notice = document.getElementById('chooseNicknameNotice');
+            const notice = document.getElementById('chooseGoogleNotice');
             const raw = input ? input.value.trim() : '';
             const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!key || key.length < 2) { if (notice) notice.textContent = 'Pick a nickname at least 2 characters long.'; return; }
@@ -13749,7 +13843,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         // an unusual case and the user asked for the choice to go away entirely.
         async function apexTryNicknameSignIn() {
             const input = document.getElementById('accountNicknameInput');
-            const notice = document.getElementById('accountNicknameNotice');
+            const notice = document.getElementById('accountGoogleNotice');
             const raw = input ? input.value.trim() : '';
             const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
             if (!key) { if (notice) notice.textContent = 'Enter a nickname first.'; return; }

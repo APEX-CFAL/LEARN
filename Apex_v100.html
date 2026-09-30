@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apex v50</title>
+    <title>Apex — Study Workspace</title>
     <link rel="icon" id="appFavicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'><rect width='100' height='120' rx='22' fill='%236B17E0'/><circle cx='50' cy='46' r='26' stroke='white' stroke-width='8' fill='none'/><path d='M30 76 Q50 112 70 76' fill='white'/></svg>">
     <!-- 2026-09-23: the AI logic module (prompts + call engine), one file per app section —
          see app plans/CLAUDE.md's dated entry and apex sub apps/ai-logic/index.js's own header
@@ -19,6 +19,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- V2:FONT -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet">
+    <!-- /V2:FONT -->
     <style>
         * {
             margin: 0;
@@ -7694,7 +7697,607 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
 
 .pmd-toast { position:fixed; bottom:1.1rem; left:50%; transform:translateX(-50%) translateY(20px); background:var(--c-text-1); color:#fff; padding:0.65rem 1.15rem; border-radius:999px; font-size:0.82rem; font-weight:700; opacity:0; pointer-events:none; transition:all 0.25s; z-index:9700; white-space:nowrap; }
 .pmd-toast.pmd-show { opacity:1; transform:translateX(-50%) translateY(0); }
-</style>
+/* V2:CSS */
+        /* ╔══════════════════════════════════════════════════════════════════╗
+           ║  APEX DESIGN SYSTEM v2 — "Studio" redesign layer (Apex_v101)      ║
+           ║  Cream canvas · ink outlines · violet rail · candy accents.        ║
+           ║  Loaded last so it wins over DS v1. Every rule here is additive:   ║
+           ║  no IDs the app's JS writes into are renamed or removed.           ║
+           ╚══════════════════════════════════════════════════════════════════╝ */
+
+        :root, body {
+            --v2-cream: #FBF6EC; --v2-card: #FFFFFF; --v2-sand: #F3EBDC;
+            --v2-ink: #1B1530; --v2-muted: #6E6787;
+            --v2-violet: #6A4CF5; --v2-violet-deep: #5438D6; --v2-violet-soft: #ECE7FF;
+            --v2-pink: #FF4D8D; --v2-pink-deep: #E33A77;
+            --v2-yellow: #F5B82E; --v2-yellow-deep: #D99A0E;
+            --v2-mint: #17C8A2; --v2-mint-deep: #0FA986;
+            --v2-navy: #1B1530; --v2-navy-2: #251C45;
+            --v2-line: #1B1530; --v2-line-soft: #E7DFD0;
+            --v2-r: 22px; --v2-r-sm: 14px;
+            --v2-shadow: 0 10px 30px -12px rgba(27,21,48,0.18);
+            --v2-shadow-lg: 0 24px 60px -20px rgba(27,21,48,0.28);
+            --v2-font-display: 'Outfit', 'DM Sans', 'Nunito', sans-serif;
+            --v2-font-body: 'DM Sans', 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --v2-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+            /* Re-point DS v1 tokens at the v2 palette (light) */
+            --c-bg-1: var(--v2-cream); --c-bg-2: var(--v2-card); --c-bg-3: var(--v2-sand);
+            --c-text-1: var(--v2-ink); --c-text-2: var(--v2-muted);
+            --c-accent: var(--v2-violet); --c-accent-hover: var(--v2-violet-deep);
+            --c-accent-soft: var(--v2-violet-soft); --c-on-accent: #FFFFFF;
+            --c-border: var(--v2-line-soft); --c-border-strong: var(--v2-ink);
+            --c-success: #0FA986; --c-warning: #D99A0E; --c-danger: #E0245E; --accent-rgb: 106,76,245;
+            --shadow: rgba(27,21,48,0.10);
+        }
+        body.dark-mode {
+            --v2-cream: #0F0C1E; --v2-card: #171331; --v2-sand: #211B40;
+            --v2-ink: #F6F3FF; --v2-muted: #A9A3C4;
+            --v2-violet: #8B74FF; --v2-violet-deep: #7A61F5; --v2-violet-soft: #26204A;
+            --v2-navy: #0B0818; --v2-navy-2: #171331;
+            --v2-line: #3B3364; --v2-line-soft: #2B2550;
+            --v2-shadow: 0 10px 30px -12px rgba(0,0,0,0.6);
+            --v2-shadow-lg: 0 24px 60px -20px rgba(0,0,0,0.7);
+            --c-bg-1: var(--v2-cream); --c-bg-2: var(--v2-card); --c-bg-3: var(--v2-sand);
+            --c-text-1: var(--v2-ink); --c-text-2: var(--v2-muted);
+            --c-accent: var(--v2-violet); --c-accent-hover: var(--v2-violet-deep);
+            --c-accent-soft: var(--v2-violet-soft); --c-on-accent: #FFFFFF;
+            --c-border: var(--v2-line-soft); --c-border-strong: #6F5CE8;
+            --c-success: #34D399; --c-warning: #FBBF24; --c-danger: #FB7185; --accent-rgb: 139,116,255;
+            --shadow: rgba(0,0,0,0.45);
+        }
+        body.theme-brown { --c-accent: #6B4430; --c-accent-hover: #553520; --v2-violet: #6B4430; --v2-violet-deep: #553520; --v2-violet-soft: #F3E6DA; --accent-rgb: 107,68,48; }
+        body.theme-brown.dark-mode { --c-accent: #B8886A; --v2-violet: #B8886A; --v2-violet-deep: #D0A080; --v2-violet-soft: #3A2A1E; }
+
+        /* ── Typography ── */
+        body { font-family: var(--v2-font-body); background: var(--c-bg-1); color: var(--c-text-1); -webkit-font-smoothing: antialiased; }
+        h1, h2, h3, .rl-title, .home-today-label, .section-title, .ds-card-heading, .metrics-block-title,
+        .nmc-big-title, .logo-text-main, .rl-stat-num, .mqc-value, .ch-title, .notes-view-title {
+            font-family: var(--v2-font-display); letter-spacing: -0.02em;
+        }
+        .rl-title { font-size: 40px; font-weight: 700; line-height: 1.05; margin-bottom: 6px; }
+        .rl-subtitle { font-size: 15px; color: var(--c-text-2); margin-bottom: 26px; }
+        .home-today-label { font-size: 30px; font-weight: 700; }
+        .rl-eyebrow, .ds-card-eyebrow { font-size: 11.5px; letter-spacing: 0.08em; }
+        ::selection { background: var(--v2-yellow); color: var(--v2-navy); }
+
+        /* ── Scrollbars & focus ── */
+        * { scrollbar-width: thin; scrollbar-color: rgba(106,76,245,0.35) transparent; }
+        *::-webkit-scrollbar { width: 10px; height: 10px; }
+        *::-webkit-scrollbar-thumb { background: rgba(106,76,245,0.3); border-radius: 99px; border: 3px solid transparent; background-clip: padding-box; }
+        *::-webkit-scrollbar-thumb:hover { background: rgba(106,76,245,0.55); background-clip: padding-box; }
+        :focus-visible { outline: 3px solid var(--v2-yellow) !important; outline-offset: 2px; border-radius: 8px; }
+
+        /* ══════════════ SIDEBAR — violet rail ══════════════ */
+        .sidebar {
+            background: var(--v2-violet) !important;
+            color: #fff !important;
+            border-right: none !important;
+            box-shadow: none !important;
+            display: flex; flex-direction: column;
+            padding: 0;
+        }
+        body.dark-mode .sidebar { background: #150F35 !important; box-shadow: 1px 0 0 var(--v2-line-soft) !important; }
+        .sidebar .sidebar-header { padding: 22px 18px 10px !important; }
+        .sidebar .app-title { display: flex; align-items: center; gap: 12px; }
+        .sidebar .logo-icon {
+            width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important;
+            border-radius: 50% !important; background: var(--v2-yellow) !important;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.18) !important;
+            color: var(--v2-navy); font-family: var(--v2-font-display); font-weight: 800; font-size: 20px;
+        }
+        .sidebar .logo-icon::before { display: none !important; }
+        .sidebar .logo-icon::after { content: 'A' !important; position: static !important; width: auto !important; height: auto !important; border: none !important; transform: none !important; color: var(--v2-navy); }
+        .sidebar .logo-text-main { color: #fff !important; font-size: 21px !important; font-weight: 700 !important; }
+        .sidebar .logo-text-sub { color: rgba(255,255,255,0.7) !important; font-size: 10px !important; font-weight: 700 !important; letter-spacing: 0.14em !important; text-transform: uppercase; }
+        .sidebar .sidebar-menu-btn-container { display: none !important; }
+        .sidebar .sidebar-nav-scroll { padding: 8px 14px 0 !important; flex: 1 1 auto; overflow-y: auto; position: static !important; height: auto !important; max-height: none !important; bottom: auto !important; }
+        .sidebar .menu-item {
+            justify-content: flex-start !important; gap: 12px !important;
+            padding: 11px 14px !important; margin: 3px 0 !important;
+            border-radius: 14px !important; border-left: none !important;
+            color: rgba(255,255,255,0.86) !important; background: transparent !important;
+            transition: background .2s, transform .2s var(--v2-ease) !important;
+        }
+        .sidebar .menu-item .icon-wrap {
+            width: 26px !important; height: 26px !important; border-radius: 8px !important;
+            background: transparent !important; box-shadow: none !important; transform: none !important;
+            color: rgba(255,255,255,0.86) !important;
+        }
+        .sidebar .menu-item svg { width: 22px !important; height: 22px !important; }
+        .sidebar .menu-item span { opacity: 1 !important; max-width: none !important; color: rgba(255,255,255,0.9) !important; font-size: 15px !important; font-weight: 600 !important; }
+        .sidebar .menu-item:hover { background: rgba(255,255,255,0.12) !important; transform: translateX(2px); }
+        .sidebar .menu-item.active { background: rgba(255,255,255,0.16) !important; }
+        .sidebar .menu-item.active .icon-wrap, .sidebar .menu-item.active .icon-wrap svg, .sidebar .menu-item.active span { color: #fff !important; }
+        .sidebar .menu-item.active::after {
+            content: ''; position: absolute; right: 10px; top: 50%; width: 6px; height: 6px; border-radius: 50%;
+            background: var(--v2-yellow); transform: translateY(-50%);
+        }
+        /* streak card (injected by v2 JS) */
+        .v2-streak-card {
+            margin: 10px 14px 6px; padding: 16px 16px 14px; border-radius: 18px;
+            background: rgba(255,255,255,0.12); color: #fff;
+        }
+        .v2-streak-card .v2-sc-top { display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; }
+        .v2-streak-card .v2-sc-top b { font-weight: 600; letter-spacing: 0; text-transform: none; opacity: 0.8; }
+        .v2-streak-card .v2-sc-num { font-family: var(--v2-font-display); font-size: 30px; font-weight: 700; line-height: 1.1; margin: 8px 0 10px; }
+        .v2-streak-card .v2-sc-bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,0.2); overflow: hidden; }
+        .v2-streak-card .v2-sc-bar i { display: block; height: 100%; width: 0; background: var(--v2-yellow); border-radius: 99px; transition: width 1s var(--v2-ease); }
+        .v2-streak-card .v2-sc-sub { font-size: 12px; opacity: 0.78; margin-top: 10px; }
+        .sidebar .sidebar-bottom-controls { padding: 6px 14px 16px !important; border-top: none !important; background: transparent !important; position: static !important; width: auto !important; flex-shrink: 0; }
+        .sidebar .control-row { padding: 7px 8px !important; border-radius: 10px; justify-content: space-between !important; }
+        .sidebar .control-row:hover { background: rgba(255,255,255,0.1); }
+        .sidebar .control-label { color: rgba(255,255,255,0.85) !important; opacity: 1 !important; display: block !important; font-size: 13px !important; font-weight: 600 !important; }
+        .sidebar .control-row span[style*="--accent"] { color: var(--v2-yellow) !important; }
+        .sidebar .restart-icon-btn { background: var(--v2-yellow) !important; color: var(--v2-navy) !important; }
+        .sidebar .dark-mode-toggle { display: inline-block !important; background: rgba(255,255,255,0.22) !important; border-color: rgba(255,255,255,0.4) !important; }
+        .sidebar .restart-btn-row { padding: 6px 4px 0 !important; }
+        .sidebar .restart-app-btn { background: rgba(0,0,0,0.18) !important; color: #fff !important; border: 1.5px solid rgba(255,255,255,0.25) !important; border-radius: 12px !important; width: 100%; justify-content: center; }
+        .sidebar .restart-app-btn:hover { background: rgba(0,0,0,0.3) !important; }
+
+        /* Desktop: rail is always expanded */
+        @media (min-width: 1025px) {
+            .sidebar, .sidebar.open { width: 250px !important; }
+            .main-content, .sidebar.open ~ .main-content, .main-content.sidebar-open { margin-left: 250px !important; }
+            .sidebar .logo-text { opacity: 1 !important; position: static !important; visibility: visible !important; pointer-events: auto !important; display: flex; flex-direction: column; }
+        }
+        /* Tablet: icon rail, labels hidden */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .sidebar, .sidebar.open { width: 76px !important; }
+            .main-content, .sidebar.open ~ .main-content { margin-left: 76px !important; }
+            .sidebar .menu-item { justify-content: center !important; padding: 11px 0 !important; }
+            .sidebar .menu-item span { display: none !important; }
+            .sidebar .menu-item.active::after { display: none; }
+            .sidebar .sidebar-header { padding: 18px 0 8px !important; display: flex; justify-content: center; }
+            .sidebar .logo-text { display: none !important; }
+            .v2-streak-card { display: none; }
+            .sidebar .control-row { justify-content: center !important; }
+            .sidebar .control-label, .sidebar .restart-app-btn span, .sidebar .restart-icon-btn { display: none !important; }
+            .sidebar .restart-app-btn { padding: 8px !important; }
+        }
+
+        /* ══════════════ MAIN CANVAS ══════════════ */
+        .main-content { background: var(--c-bg-1); }
+        .home-layout-single, .content-container { padding: 34px 40px 60px !important; }
+        @media (max-width: 1024px) { .home-layout-single, .content-container { padding: 24px 22px 60px !important; } }
+        @media (max-width: 767px)  { .home-layout-single, .content-container { padding: 18px 16px 90px !important; } }
+        .app-section.section-enter { animation: v2SectionIn .55s var(--v2-ease) both !important; }
+        @keyframes v2SectionIn { from { opacity: 0; transform: translateY(14px) scale(.995); } to { opacity: 1; transform: none; } }
+        @keyframes v2PopIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+        @keyframes v2Float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes v2Pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(245,184,46,0.6); } 60% { box-shadow: 0 0 0 8px rgba(245,184,46,0); } }
+
+        /* ══════════════ HOME v2 (built by v2 JS) ══════════════ */
+        #section-home .home-layout-single { max-width: 1240px !important; }
+        .v2-home-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 26px; animation: v2PopIn .5s var(--v2-ease) both; }
+        .v2-date { color: var(--v2-pink); font-weight: 700; font-size: 14px; letter-spacing: 0.01em; margin-bottom: 6px; }
+        .v2-greet { font-family: var(--v2-font-display); font-size: clamp(30px, 4vw, 50px); font-weight: 700; line-height: 1; letter-spacing: -0.03em; color: var(--c-text-1); }
+        .v2-greet .v2-wave { display: inline-block; animation: v2Wave 2.2s ease-in-out 1s 2; transform-origin: 70% 70%; }
+        @keyframes v2Wave { 0%,100% { transform: rotate(0); } 20% { transform: rotate(16deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(12deg); } 80% { transform: rotate(-4deg); } }
+        .v2-head-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .v2-btn-ink {
+            display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 999px;
+            background: var(--v2-navy); color: #fff; font-weight: 700; font-size: 15px; border: 2px solid var(--v2-navy);
+            cursor: pointer; font-family: inherit; transition: transform .2s var(--v2-ease), box-shadow .2s, background .2s;
+            box-shadow: 0 6px 0 -2px rgba(27,21,48,0.25);
+        }
+        body.dark-mode .v2-btn-ink { background: var(--v2-violet); border-color: var(--v2-violet); box-shadow: 0 6px 0 -2px rgba(0,0,0,0.5); }
+        .v2-btn-ink:hover { transform: translateY(-2px); box-shadow: 0 10px 18px -8px rgba(27,21,48,0.5); }
+        .v2-btn-ink:active { transform: translateY(1px); box-shadow: none; }
+        .v2-avatar {
+            width: 48px; height: 48px; border-radius: 50%; background: var(--v2-mint); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-weight: 800; font-family: var(--v2-font-display);
+            font-size: 18px; border: 2px solid var(--v2-line); cursor: pointer; overflow: hidden; flex-shrink: 0;
+            transition: transform .2s var(--v2-ease);
+        }
+        .v2-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .v2-avatar:hover { transform: scale(1.06) rotate(-4deg); }
+
+        .v2-grid-top { display: grid; grid-template-columns: minmax(0, 2.05fr) minmax(300px, 1fr); gap: 22px; margin-bottom: 22px; }
+        .v2-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-bottom: 22px; }
+        .v2-card {
+            background: var(--v2-card); border: 2px solid var(--v2-line); border-radius: var(--v2-r);
+            padding: 24px 26px; position: relative; transition: transform .25s var(--v2-ease), box-shadow .25s;
+            animation: v2PopIn .55s var(--v2-ease) both;
+        }
+        .v2-card:hover { transform: translateY(-3px); box-shadow: var(--v2-shadow); }
+        .v2-card.v2-clickable { cursor: pointer; }
+        .v2-card-title { font-family: var(--v2-font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .v2-card-title .v2-arrow { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--c-text-2); transition: background .2s, color .2s, transform .2s var(--v2-ease); font-weight: 500; }
+        .v2-card:hover .v2-arrow { background: var(--v2-violet-soft); color: var(--v2-violet); transform: translateX(3px); }
+        .v2-card-title .v2-count { font-size: 12.5px; font-weight: 600; color: var(--c-text-2); }
+        .v2-eyebrow { font-size: 13px; font-weight: 600; color: var(--c-text-2); }
+        .v2-eyebrow.v2-on-dark { color: rgba(255,255,255,0.7); }
+        .v2-stagger > * { animation: v2PopIn .55s var(--v2-ease) both; }
+        .v2-stagger > *:nth-child(2) { animation-delay: .06s; }
+        .v2-stagger > *:nth-child(3) { animation-delay: .12s; }
+        .v2-stagger > *:nth-child(4) { animation-delay: .18s; }
+
+        /* Notice strip (app-controlled banners, restyled) */
+        .v2-notices:empty { display: none; }
+        .v2-notices > div { background: var(--v2-sand); border-radius: 14px; padding: 11px 16px; font-size: 13.5px; font-weight: 600; color: var(--c-text-1); margin-bottom: 12px; border-left: 4px solid var(--v2-yellow); }
+        .v2-notices > div[style*="display: none"], .v2-notices > div[style*="display:none"] { display: none !important; }
+        .v2-notices > #homeExamAlert { border-left-color: var(--v2-pink); }
+        .v2-notices > #doneForTodayCard { border-left-color: var(--v2-mint); }
+        .v2-grid-top { margin-top: 4px; }
+
+        /* Focus hero (navy) */
+        .v2-hero {
+            background: var(--v2-navy); color: #fff; border-radius: var(--v2-r); border: 2px solid var(--v2-navy);
+            padding: 34px 36px 30px; min-height: 300px; position: relative; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: center; animation: v2PopIn .55s var(--v2-ease) both;
+        }
+        body.dark-mode .v2-hero { border-color: var(--v2-line); }
+        .v2-hero .v2-blob { position: absolute; border-radius: 50%; pointer-events: none; }
+        .v2-hero .v2-blob-1 { width: 150px; height: 150px; top: -70px; right: 230px; background: #6B4A2C; opacity: .9; animation: v2Float 7s ease-in-out infinite; }
+        .v2-hero .v2-blob-2 { width: 300px; height: 300px; bottom: -160px; right: -40px; background: #7A2E5A; animation: v2Float 9s ease-in-out infinite reverse; }
+        .v2-hero .v2-blob-3 { width: 90px; height: 90px; bottom: 30px; right: 380px; background: var(--v2-violet); opacity: .5; filter: blur(2px); animation: v2Float 6s ease-in-out infinite 1s; }
+        .v2-hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
+        .v2-hero-status { display: inline-flex; align-items: center; gap: 8px; color: var(--v2-yellow); font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+        .v2-hero-status i { width: 8px; height: 8px; border-radius: 50%; background: var(--v2-yellow); animation: v2Pulse 2s infinite; }
+        .v2-hero-status.v2-idle { color: rgba(255,255,255,0.7); }
+        .v2-hero-status.v2-idle i { background: rgba(255,255,255,0.5); animation: none; }
+        .v2-hero-status.v2-done { color: var(--v2-mint); }
+        .v2-hero-status.v2-done i { background: var(--v2-mint); animation: none; }
+        .v2-hero-title { font-family: var(--v2-font-display); font-size: clamp(28px, 3.2vw, 44px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 8px; overflow-wrap: anywhere; }
+        .v2-hero-sub { color: rgba(255,255,255,0.7); font-size: 15px; margin-bottom: 26px; }
+        .v2-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .v2-btn-pink {
+            display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 999px; border: none;
+            background: var(--v2-pink); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit;
+            transition: transform .2s var(--v2-ease), filter .2s; box-shadow: 0 10px 24px -10px rgba(255,77,141,0.8);
+        }
+        .v2-btn-pink:hover { transform: translateY(-2px); filter: brightness(1.06); }
+        .v2-btn-pink:active { transform: translateY(1px); }
+        .v2-btn-glass {
+            display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 999px; border: none;
+            background: rgba(255,255,255,0.12); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit;
+            transition: background .2s, transform .2s var(--v2-ease);
+        }
+        .v2-btn-glass:hover { background: rgba(255,255,255,0.22); transform: translateY(-2px); }
+        .v2-timer { text-align: right; }
+        .v2-timer-num { font-family: var(--v2-font-display); font-size: clamp(56px, 6.5vw, 96px); font-weight: 800; line-height: .95; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+        .v2-timer-sub { color: rgba(255,255,255,0.65); font-size: 14px; margin-top: 8px; }
+        .v2-timer-ring { width: 100%; height: 6px; background: rgba(255,255,255,0.14); border-radius: 99px; overflow: hidden; margin-top: 14px; }
+        .v2-timer-ring i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--v2-yellow), var(--v2-pink)); border-radius: 99px; transition: width 1s linear; }
+
+        /* AI companion card */
+        .v2-ai { display: flex; flex-direction: column; padding: 22px 22px 20px; }
+        .v2-ai .v2-card-title { margin-bottom: 14px; }
+        .v2-ai-title { display: flex; align-items: center; gap: 8px; }
+        .v2-ai-title svg { color: var(--v2-violet); }
+        .v2-online { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--c-text-2); }
+        .v2-online i { width: 7px; height: 7px; border-radius: 50%; background: var(--v2-mint); box-shadow: 0 0 0 3px rgba(23,200,162,0.2); }
+        .v2-ai-tip { background: var(--v2-sand); border-radius: 16px; padding: 14px 16px; font-size: 14px; line-height: 1.55; color: var(--c-text-1); }
+        .v2-ai-tip b, .v2-ai-tip strong { color: var(--v2-violet); font-weight: 700; }
+        .v2-ai-tip .v2-ai-name { color: var(--v2-violet); font-weight: 700; }
+        .v2-ai-reply { align-self: flex-end; max-width: 92%; background: var(--v2-violet); color: #fff; border-radius: 18px 18px 4px 18px; padding: 12px 16px; font-size: 14px; line-height: 1.5; margin-top: 10px; }
+        .v2-ai-input { display: flex; gap: 8px; margin-top: 14px; }
+        #v2AiInputHost { margin-top: auto; }
+        .v2-ai-input input {
+            flex: 1; min-width: 0; padding: 12px 16px; border-radius: 999px; border: 2px solid var(--v2-line-soft); background: var(--v2-card);
+            font-family: inherit; font-size: 14px; color: var(--c-text-1); transition: border-color .2s, box-shadow .2s;
+        }
+        .v2-ai-input input:focus { outline: none !important; border-color: var(--v2-violet); box-shadow: 0 0 0 4px var(--v2-violet-soft); }
+        .v2-ai-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .v2-ai-actions .v2-btn-ink { flex: 1; justify-content: center; padding: 12px 18px; font-size: 14px; }
+        .v2-btn-yellow { display: inline-flex; align-items: center; justify-content: center; padding: 12px 18px; border-radius: 999px; border: none; background: var(--v2-yellow); color: var(--v2-navy); font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; transition: transform .2s var(--v2-ease); }
+        .v2-btn-yellow:hover { transform: translateY(-2px); }
+        .v2-ai-answer { margin-top: 12px; background: var(--v2-sand); border-radius: 16px; padding: 14px 16px; font-size: 14px; line-height: 1.6; max-height: 260px; overflow: auto; }
+        .v2-ai-answer:empty { display: none; }
+
+        /* Stat tiles */
+        .v2-stat { padding: 26px 26px 24px; min-height: 176px; display: flex; flex-direction: column; }
+        .v2-stat .v2-stat-label { font-size: 14px; font-weight: 600; opacity: .8; margin-bottom: 8px; }
+        .v2-stat .v2-stat-num { font-family: var(--v2-font-display); font-size: clamp(38px, 3.6vw, 54px); font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+        .v2-stat .v2-stat-num small { font-size: 0.5em; font-weight: 600; opacity: .7; margin-left: 4px; letter-spacing: 0; }
+        .v2-stat .v2-stat-sub { font-size: 13.5px; opacity: .8; margin-top: 8px; }
+        .v2-stat .v2-bar { height: 8px; border-radius: 99px; background: var(--v2-sand); margin-top: auto; overflow: hidden; }
+        .v2-stat .v2-bar i { display: block; height: 100%; width: 0; background: var(--v2-mint); border-radius: 99px; transition: width 1.1s var(--v2-ease); }
+        .v2-stat .v2-stat-icon { position: absolute; right: 22px; top: 22px; width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+        .v2-stat-white .v2-stat-icon { background: rgba(23,200,162,0.14); color: var(--v2-mint); }
+        .v2-stat-icon-pts { background: rgba(27,21,48,0.12); font-size: 20px; }
+        .v2-stat-yellow { background: var(--v2-yellow); border-color: var(--v2-yellow); color: var(--v2-navy); }
+        .v2-stat-yellow .v2-bar { background: rgba(27,21,48,0.15); } .v2-stat-yellow .v2-bar i { background: var(--v2-navy); }
+        .v2-stat-pink { background: var(--v2-pink); border-color: var(--v2-pink); color: #fff; }
+        .v2-stat-pink .v2-bar { background: rgba(255,255,255,0.28); } .v2-stat-pink .v2-bar i { background: #fff; }
+        .v2-level-ring { position: absolute; right: 22px; top: 20px; width: 64px; height: 64px; }
+        .v2-level-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .v2-level-ring .v2-lv { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .v2-level-ring #homeLevelText { font-family: var(--v2-font-display); font-size: 17px; font-weight: 800; line-height: 1; }
+        .v2-level-ring #homeLevelSub { font-size: 8.5px; font-weight: 700; opacity: .7; margin-top: 2px; white-space: nowrap; }
+        .v2-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+        .v2-pill-row span { background: rgba(255,255,255,0.22); padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
+        #homeGreetText { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+        /* Today's plan list (rendered by loadHomePage into #homeTTCards) */
+        #homeTTCards { display: flex; flex-direction: column; gap: 4px; }
+        #homeTTCards > div[style] {
+            background: transparent !important; border: none !important; border-left: none !important; border-radius: 14px !important;
+            padding: 10px 10px !important; gap: 14px !important; transition: background .2s;
+        }
+        #homeTTCards > div[style]:hover { background: var(--v2-sand) !important; }
+        #homeTTCards > div[style] > div:first-child {
+            min-width: 40px !important; width: 40px; height: 40px; border-radius: 50% !important; display: flex; align-items: center; justify-content: center;
+            background: var(--v2-violet-soft) !important; color: var(--v2-violet) !important; font-size: 11px !important; font-weight: 800 !important;
+        }
+        #homeTTCards > div[style] > div:nth-child(2) > div:first-child { font-size: 15px !important; font-weight: 700 !important; }
+        #homeTTCards > div[style] > div:nth-child(2) > div:last-child { font-size: 12.5px !important; color: var(--c-text-2) !important; margin-top: 2px; }
+        #homeTTCards > div[style]:nth-child(2) > div:first-child { background: rgba(255,77,141,0.14) !important; color: var(--v2-pink) !important; }
+        #homeTTCards > div[style]:nth-child(3) > div:first-child { background: rgba(23,200,162,0.14) !important; color: var(--v2-mint-deep) !important; }
+
+        /* Strengths list (#homeSWList) → soft rows with a mini bar */
+        #homeSWList { display: flex; flex-direction: column; gap: 6px; }
+        #homeSWList > div { padding: 10px 12px; border-radius: 12px; background: var(--v2-sand); }
+        #homeSWList > div > span:first-child { font-weight: 600 !important; font-size: 14px !important; }
+        #homeSWList > div > span:last-child { font-family: var(--v2-font-display); font-size: 16px !important; }
+
+        /* Quick-action rows (the old banners, moved) */
+        .v2-actions { display: flex; flex-direction: column; gap: 10px; }
+        .v2-actions > div[id] {
+            background: var(--v2-sand) !important; border: none !important; border-radius: 16px !important; padding: 14px 16px !important; margin: 0 !important;
+            transition: transform .2s var(--v2-ease), background .2s !important;
+        }
+        .v2-actions > div[id]:hover { transform: translateX(4px); background: var(--v2-violet-soft) !important; }
+        .v2-actions > div[id] > div > div:first-child { border-radius: 12px !important; border: none !important; background: var(--v2-card) !important; }
+        .v2-actions > div[id] > div > div:last-child { color: var(--v2-violet) !important; }
+
+        /* Body check row */
+        .v2-body-row { display: grid; grid-template-columns: 1fr; gap: 8px; }
+        .v2-body-row > div[style] { background: var(--v2-sand) !important; border: none !important; border-radius: 16px !important; padding: 12px 14px !important; }
+        .v2-body-row > div[style] > div:last-child > div:nth-child(2) { font-family: var(--v2-font-display); font-size: 18px !important; }
+
+        @media (max-width: 1180px) {
+            .v2-grid-top { grid-template-columns: 1fr; }
+            .v2-hero { min-height: 240px; }
+        }
+        @media (max-width: 900px) {
+            .v2-grid-3 { grid-template-columns: 1fr; }
+            .v2-hero-inner { grid-template-columns: 1fr; }
+            .v2-timer { text-align: left; }
+            .v2-hero .v2-blob-1 { right: 40px; }
+        }
+        @media (max-width: 640px) {
+            .v2-body-row { grid-template-columns: 1fr; }
+            .v2-home-head { flex-direction: column; align-items: flex-start; }
+            .v2-hero { padding: 26px 22px; }
+            .v2-body-row { grid-template-columns: 1fr; }
+            .v2-card { padding: 20px 18px; }
+        }
+
+        /* ══════════════ GLOBAL COMPONENT RESTYLE (all sections) ══════════════ */
+        .rl-card, .ds-card, .metrics-block, .apx-card, .nmc-big-card, .rl-stat-card, .metrics-quick-card,
+        .checkin-card, .graph-container, .subject-card, .notes-mode-card, .plan-card, .ai-tips-section {
+            background: var(--v2-card) !important; border: 2px solid var(--v2-line) !important; border-radius: var(--v2-r) !important;
+            box-shadow: none !important; transition: transform .25s var(--v2-ease), box-shadow .25s, border-color .2s !important;
+        }
+        .rl-card:hover, .ds-card:hover, .apx-card:hover, .nmc-big-card:hover, .subject-card:hover, .notes-mode-card:hover, .plan-card:hover {
+            transform: translateY(-3px); box-shadow: var(--v2-shadow) !important; border-color: var(--v2-line) !important;
+        }
+        .session-card { border-radius: 16px !important; border: 2px solid var(--v2-line-soft) !important; border-left: 5px solid var(--v2-violet) !important; background: var(--v2-card) !important; }
+        .rl-stat-num, .mqc-value { font-size: 34px; font-weight: 700; }
+        .rl-btn-primary, .ds-btn-primary, .modal-btn-primary, .at-btn, .add-exam-btn, button[style*="background:var(--accent)"] {
+            background: var(--v2-violet) !important; color: #fff !important; border: 2px solid var(--v2-navy) !important;
+            box-shadow: 0 4px 0 var(--v2-navy) !important; border-radius: 999px !important; font-weight: 700 !important;
+            transition: transform .15s var(--v2-ease), box-shadow .15s, background .2s !important;
+        }
+        body.dark-mode .rl-btn-primary, body.dark-mode .ds-btn-primary, body.dark-mode .modal-btn-primary, body.dark-mode button[style*="background:var(--accent)"] { border-color: #4B3ABF !important; box-shadow: 0 4px 0 #4B3ABF !important; }
+        .rl-btn-primary:hover, .ds-btn-primary:hover, .modal-btn-primary:hover, button[style*="background:var(--accent)"]:hover { transform: translateY(2px) !important; box-shadow: 0 2px 0 var(--v2-navy) !important; background: var(--v2-violet-deep) !important; }
+        .rl-btn-secondary, .ds-btn-secondary { border: 2px solid var(--v2-line) !important; box-shadow: 0 4px 0 var(--v2-line) !important; border-radius: 999px !important; background: var(--v2-card) !important; color: var(--c-text-1) !important; }
+        .rl-btn-secondary:hover, .ds-btn-secondary:hover { transform: translateY(2px); box-shadow: 0 2px 0 var(--v2-line) !important; background: var(--v2-sand) !important; }
+        .ds-input, .form-input, .owg-account-input, input[type="text"], input[type="number"], input[type="date"], input[type="password"], textarea, select {
+            border-radius: 14px; border: 2px solid var(--v2-line-soft); background: var(--v2-card); color: var(--c-text-1); font-family: inherit;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .ds-input:focus, .form-input:focus, .owg-account-input:focus, textarea:focus, select:focus { border-color: var(--v2-violet); box-shadow: 0 0 0 4px var(--v2-violet-soft); outline: none !important; }
+        .modal { backdrop-filter: blur(8px); background: rgba(27,21,48,0.45) !important; }
+        .modal-content { border: 2px solid var(--v2-line) !important; border-radius: 26px !important; box-shadow: var(--v2-shadow-lg) !important; background: var(--v2-card) !important; animation: v2PopIn .35s var(--v2-ease) both; }
+        .rl-eyebrow { color: var(--v2-violet) !important; }
+        .rl-pill { border-radius: 999px !important; font-weight: 700; }
+        .ds-skeleton { background: var(--v2-sand) !important; }
+        .ds-skeleton::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent) !important; }
+        body.dark-mode .ds-skeleton::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent) !important; }
+        .nmc-progress-fill, .rl-progress-fill, .progress-fill { border-radius: 99px !important; }
+
+        /* Toasts */
+        .pmd-toast, #fxToast, .fx-toast, .toast {
+            border-radius: 999px !important; background: var(--v2-navy) !important; color: #fff !important; border: 2px solid var(--v2-yellow) !important;
+            font-weight: 700 !important; box-shadow: var(--v2-shadow-lg) !important;
+        }
+
+        /* Bottom nav (phone) */
+        .bottom-nav-bar { background: var(--v2-card) !important; border-top: 2px solid var(--v2-line) !important; border-radius: 22px 22px 0 0; box-shadow: 0 -10px 30px -16px rgba(27,21,48,0.35); padding-top: 8px !important; }
+        .bnav-item { border-radius: 14px !important; padding: 6px 10px !important; }
+        .bnav-item.active { background: var(--v2-violet-soft) !important; color: var(--v2-violet) !important; }
+        .bnav-item.active svg { transform: translateY(-1px) scale(1.08); }
+
+        /* ══════════════ COMMAND PALETTE (⌘K) ══════════════ */
+        .v2-kbar-wrap { position: fixed; inset: 0; z-index: 99999; display: none; align-items: flex-start; justify-content: center; padding-top: 12vh; background: rgba(27,21,48,0.5); backdrop-filter: blur(10px); }
+        .v2-kbar-wrap.open { display: flex; }
+        .v2-kbar { width: min(640px, 92vw); background: var(--v2-card); border: 2px solid var(--v2-line); border-radius: 24px; box-shadow: var(--v2-shadow-lg); overflow: hidden; animation: v2PopIn .25s var(--v2-ease) both; }
+        .v2-kbar input { width: 100%; padding: 20px 24px; border: none; border-bottom: 2px solid var(--v2-line-soft); background: transparent; font-size: 18px; font-family: var(--v2-font-display); font-weight: 600; color: var(--c-text-1); border-radius: 0; }
+        .v2-kbar input:focus { outline: none !important; box-shadow: none; }
+        .v2-kbar-list { max-height: 50vh; overflow: auto; padding: 8px; }
+        .v2-kbar-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; cursor: pointer; font-weight: 600; font-size: 15px; color: var(--c-text-1); }
+        .v2-kbar-item .v2-kbar-ic { width: 34px; height: 34px; border-radius: 10px; background: var(--v2-sand); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .v2-kbar-item .v2-kbar-hint { margin-left: auto; font-size: 12px; color: var(--c-text-2); font-weight: 600; }
+        .v2-kbar-item.sel, .v2-kbar-item:hover { background: var(--v2-violet-soft); color: var(--v2-violet); }
+        .v2-kbar-foot { display: flex; gap: 14px; padding: 10px 18px; border-top: 2px solid var(--v2-line-soft); font-size: 12px; color: var(--c-text-2); font-weight: 600; }
+        .v2-kbd { display: inline-block; padding: 1px 6px; border-radius: 6px; border: 1.5px solid var(--v2-line-soft); background: var(--v2-sand); font-family: var(--v2-font-body); font-size: 11px; margin-right: 4px; }
+
+        /* Floating ⌘K hint (desktop only) */
+        .v2-kbar-fab { position: fixed; left: 272px; bottom: 22px; z-index: 5000; display: none; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px; background: var(--v2-card); border: 2px solid var(--v2-line); font-size: 12.5px; font-weight: 700; color: var(--c-text-2); cursor: pointer; box-shadow: var(--v2-shadow); transition: transform .2s var(--v2-ease); }
+        .v2-kbar-fab:hover { transform: translateY(-2px); color: var(--v2-violet); }
+        @media (min-width: 1025px) { .v2-kbar-fab { display: inline-flex; } }
+
+        @media (prefers-reduced-motion: reduce) {
+            .v2-hero .v2-blob, .v2-greet .v2-wave, .v2-hero-status i { animation: none !important; }
+            .v2-card, .v2-hero, .v2-home-head, .v2-stagger > * { animation: none !important; }
+        }
+
+        /* ══════════════ HOME v2.1 — welcome hero, points card, weak chapters, app tiles ══════════════ */
+        .v2-hero { min-height: 0; padding: 30px 32px 22px; }
+        .v2-hero-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+        .v2-hero-meta span { background: rgba(255,255,255,0.12); padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
+        .v2-hero-sub { margin-bottom: 14px; }
+        .v2-points-big .v2-timer-num { color: var(--v2-yellow); }
+        .v2-focus-row { position: relative; z-index: 1; margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.14); display: grid; grid-template-columns: 1fr auto; gap: 14px 20px; align-items: center; }
+        .v2-focus-status { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 4px; }
+        .v2-focus-status i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.45); }
+        .v2-focus-status.v2-run { color: var(--v2-yellow); } .v2-focus-status.v2-run i { background: var(--v2-yellow); animation: v2Pulse 2s infinite; }
+        .v2-focus-status.v2-done { color: var(--v2-mint); } .v2-focus-status.v2-done i { background: var(--v2-mint); }
+        .v2-focus-title { font-family: var(--v2-font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+        .v2-focus-sub { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+        .v2-focus-ctrl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .v2-focus-num { font-family: var(--v2-font-display); font-size: 30px; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; margin-right: 6px; }
+        .v2-focus-ctrl .v2-btn-pink, .v2-focus-ctrl .v2-btn-glass { padding: 10px 16px; font-size: 13.5px; }
+        .v2-icon-btn { width: 40px; padding: 10px 0 !important; justify-content: center; }
+        .v2-focus-bar { grid-column: 1 / -1; margin-top: 2px; }
+        .v2-link-btn { background: none; border: none; font-family: inherit; font-size: 13px; font-weight: 700; color: var(--v2-violet); cursor: pointer; padding: 4px 0; }
+        .v2-link-btn:hover { text-decoration: underline; }
+        .v2-empty { background: var(--v2-sand); border-radius: 14px; padding: 14px 16px; font-size: 13.5px; color: var(--c-text-2); line-height: 1.5; }
+        .v2-points-total { font-family: var(--v2-font-display); font-size: 34px; font-weight: 700; letter-spacing: -0.02em; color: var(--v2-violet); margin-bottom: 8px; }
+        .v2-points-total small { font-size: 14px; font-weight: 600; color: var(--c-text-2); letter-spacing: 0; }
+        .v2-points-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; background: var(--v2-sand); margin-bottom: 6px; font-size: 13.5px; font-weight: 600; }
+        .v2-points-row b { font-family: var(--v2-font-display); font-size: 15px; color: var(--v2-mint-deep); white-space: nowrap; }
+        .v2-points-row b.neg { color: var(--v2-pink-deep); }
+        .v2-rules { margin-top: 12px; border-top: 2px dashed var(--v2-line-soft); padding-top: 12px; }
+        .v2-rule { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: center; font-size: 13px; padding: 6px 0; }
+        .v2-rule b { font-family: var(--v2-font-display); color: var(--v2-violet); white-space: nowrap; }
+        .v2-rule-note { font-size: 12px; color: var(--c-text-2); margin-top: 8px; line-height: 1.5; }
+        .v2-weak { display: flex; flex-direction: column; gap: 6px; }
+        .v2-weak-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--v2-sand); cursor: pointer; transition: transform .2s var(--v2-ease), background .2s; }
+        .v2-weak-row:hover { transform: translateX(3px); background: var(--v2-violet-soft); }
+        .v2-weak-main { flex: 1; min-width: 0; }
+        .v2-weak-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .v2-weak-sub { font-size: 12px; color: var(--c-text-2); margin-top: 1px; }
+        .v2-weak-bar { height: 5px; border-radius: 99px; background: rgba(27,21,48,0.08); margin-top: 7px; overflow: hidden; }
+        body.dark-mode .v2-weak-bar { background: rgba(255,255,255,0.1); }
+        .v2-weak-bar i { display: block; height: 100%; border-radius: 99px; }
+        .v2-weak-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+        .v2-weak-right b { font-family: var(--v2-font-display); font-size: 17px; }
+        .v2-delta { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+        .v2-delta-down { background: rgba(255,77,141,0.15); color: var(--v2-pink-deep); }
+        .v2-delta-up { background: rgba(23,200,162,0.15); color: var(--v2-mint-deep); }
+        .v2-delta-flat { background: rgba(27,21,48,0.07); color: var(--c-text-2); }
+        body.dark-mode .v2-delta-flat { background: rgba(255,255,255,0.1); }
+        .v2-section-label { font-family: var(--v2-font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin: 6px 0 14px; }
+        .v2-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .v2-tile { background: var(--v2-card); border: 2px solid var(--v2-line); border-radius: 20px; padding: 18px 20px; cursor: pointer; display: flex; flex-direction: column; transition: transform .25s var(--v2-ease), box-shadow .25s; }
+        .v2-tile:hover { transform: translateY(-3px); box-shadow: var(--v2-shadow); }
+        .v2-tile-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .v2-tile-ic { width: 36px; height: 36px; border-radius: 12px; background: var(--v2-sand); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+        .v2-tile-title { font-weight: 700; font-size: 14px; color: var(--c-text-2); }
+        .v2-tile-big { font-family: var(--v2-font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15; }
+        .v2-tile-sub { font-size: 13px; color: var(--c-text-2); margin-top: 5px; line-height: 1.45; }
+        .v2-tile-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 14px; }
+        .v2-tile-btn { background: var(--v2-violet-soft); color: var(--v2-violet); border: none; border-radius: 999px; padding: 8px 14px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background .2s, transform .2s var(--v2-ease); }
+        .v2-tile-btn:hover { background: var(--v2-violet); color: #fff; transform: translateX(2px); }
+        .v2-tile-btn-2 { background: rgba(255,77,141,0.14); color: var(--v2-pink-deep); }
+        .v2-tile-btn-2:hover { background: var(--v2-pink); color: #fff; }
+        .v2-tile-week .v2-tile-ic { background: var(--v2-violet-soft); } .v2-tile-metrics .v2-tile-ic { background: rgba(23,200,162,0.15); } .v2-tile-log .v2-tile-ic { background: rgba(245,184,46,0.22); } .v2-tile-community .v2-tile-ic { background: rgba(255,77,141,0.14); }
+        .v2-tile-hot { border-color: var(--v2-yellow); background: linear-gradient(180deg, rgba(245,184,46,0.16), transparent 70%), var(--v2-card); }
+        #nav-settings, #mobnav-settings { display: none !important; }
+        @media (max-width: 900px) { .v2-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .v2-focus-row { grid-template-columns: 1fr; } .v2-focus-ctrl { justify-content: flex-start; } }
+        @media (max-width: 560px) { .v2-tiles { grid-template-columns: 1fr; } }
+
+        /* ══════════════ v2.2 — contrast fixes + community polish ══════════════ */
+        /* Resource mode cards used to flip to an ink-black fill on hover while their text stayed ink → unreadable. */
+        .nmc-big-card:hover, .nmc-syllabus:hover, .nmc-practice:hover, .nmc-quiz:hover, .nmc-papers:hover, .nmc-flashcards:hover,
+        body.dark-mode .nmc-big-card:hover, body.dark-mode .nmc-syllabus:hover, body.dark-mode .nmc-practice:hover, body.dark-mode .nmc-quiz:hover, body.dark-mode .nmc-papers:hover, body.dark-mode .nmc-flashcards:hover {
+            background: var(--v2-card) !important; border-color: var(--v2-violet) !important; box-shadow: var(--v2-shadow) !important;
+        }
+        .nmc-big-card:hover .nmc-big-title, .nmc-big-card:hover .nmc-desc-text { color: var(--c-text-1) !important; }
+        .nmc-big-card:hover .nmc-big-pct, .nmc-big-card:hover .nmc-icon-badge { color: var(--v2-violet) !important; }
+        /* Orange "partial" plan button: white-on-orange was borderline; ink reads on both themes. */
+        .plan-card-btn.partial-btn:hover { color: #1B1530 !important; }
+        /* Every text-entry field gets a themed background + text colour. :where() keeps this at zero
+           specificity, so any class or inline style the app already sets still wins — it only replaces
+           the browser's default white box, which made typed text invisible in dark mode. */
+        :where(input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="tel"],
+               input[type="number"], input[type="date"], input[type="time"], input[type="password"], textarea, select) {
+            background-color: var(--v2-card); color: var(--c-text-1); caret-color: var(--v2-violet);
+        }
+        :where(input, textarea)::placeholder { color: var(--c-text-2); opacity: 1; }
+        body.dark-mode :where(input, textarea, select) { color-scheme: dark; }
+
+        /* Username suggestions (DM request + invite-to-group) */
+        .v2-suggest-wrap { position: relative; }
+        .v2-suggest { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60; background: var(--v2-card); border: 2px solid var(--v2-line); border-radius: 16px; box-shadow: var(--v2-shadow-lg); padding: 6px; max-height: 260px; overflow: auto; animation: v2PopIn .18s var(--v2-ease) both; }
+        .v2-suggest:empty { display: none; }
+        .v2-suggest-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--c-text-1); }
+        .v2-suggest-item:hover, .v2-suggest-item.sel { background: var(--v2-violet-soft); color: var(--v2-violet); }
+        .v2-suggest-item .v2-suggest-av { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; flex-shrink: 0; }
+        .v2-suggest-item b { font-weight: 800; }
+        .v2-suggest-item .v2-suggest-hint { margin-left: auto; font-size: 11.5px; color: var(--c-text-2); font-weight: 600; }
+        .v2-suggest-note { padding: 10px 12px; font-size: 12.5px; color: var(--c-text-2); }
+        .v2-invite-overlay { position: fixed; inset: 0; z-index: 9600; background: rgba(27,21,48,0.5); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; }
+        .v2-invite-card { width: 380px; max-width: 92vw; background: var(--v2-card); border: 2px solid var(--v2-line); border-radius: 22px; padding: 22px; box-shadow: var(--v2-shadow-lg); animation: v2PopIn .25s var(--v2-ease) both; }
+        .v2-invite-card h3 { font-family: var(--v2-font-display); font-size: 19px; font-weight: 700; margin: 0 0 4px; }
+        .v2-invite-card p { font-size: 13px; color: var(--c-text-2); margin: 0 0 14px; }
+        .v2-invite-card input { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--v2-line-soft); font-family: inherit; font-size: 14px; }
+        .v2-invite-card input:focus { outline: none !important; border-color: var(--v2-violet); box-shadow: 0 0 0 4px var(--v2-violet-soft); }
+        .v2-invite-list { margin-top: 10px; max-height: 280px; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+        .v2-invite-close { float: right; background: none; border: none; font-size: 20px; color: var(--c-text-2); cursor: pointer; line-height: 1; }
+
+        /* Message timestamps + day dividers */
+        .v2-msg-time { font-size: 10.5px; font-weight: 600; color: var(--c-text-2); margin-top: 3px; letter-spacing: .01em; }
+        .v2-day-divider { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--c-text-2); }
+        .v2-day-divider::before, .v2-day-divider::after { content: ''; flex: 1; height: 1.5px; background: var(--v2-line-soft); }
+
+        /* ══════════════ v2.3 — minimal Home ══════════════ */
+        .v2-grid-top-plan { grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); }
+        .v2-plan-card { display: flex; flex-direction: column; }
+        .v2-plan-card #v2PlanHost { flex: 1; overflow: auto; max-height: 340px; }
+        .v2-link-onDark { color: var(--v2-yellow); margin-top: 14px; font-size: 13.5px; }
+        .v2-link-onDark:hover { text-decoration: underline; }
+        .v2-rules-onDark { position: relative; z-index: 1; border-top: 1.5px solid rgba(255,255,255,0.14); margin-top: 18px; padding-top: 12px; }
+        .v2-rules-onDark .v2-rule { color: rgba(255,255,255,0.88); }
+        .v2-rules-onDark .v2-rule b { color: var(--v2-yellow); }
+        .v2-rules-onDark .v2-rule-note { color: rgba(255,255,255,0.6); }
+        .v2-stat-icon-comm { background: rgba(106,76,245,0.12); font-size: 20px; }
+        .v2-comm-latest { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--v2-sand); font-size: 12.5px; color: var(--c-text-2); line-height: 1.4; }
+        .v2-comm-latest:empty { display: none; }
+        .v2-comm-who { font-weight: 800; color: var(--v2-violet); }
+        .v2-comm-text { color: var(--c-text-1); font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .v2-stat-white.v2-tile-hot { border-color: var(--v2-pink); }
+        .v2-stat-white.v2-tile-hot .v2-stat-num { color: var(--v2-pink-deep); }
+        .v2-pill-row-ink span { background: rgba(27,21,48,0.12); color: var(--v2-navy); }
+        .v2-weak-tile { padding: 22px 22px 20px; }
+        .v2-weak-tile .v2-stat-label { margin-bottom: 12px; }
+        .v2-weak-onPink .v2-weak-row { background: rgba(255,255,255,0.16); color: #fff; padding: 8px 10px; }
+        .v2-weak-onPink .v2-weak-row:hover { background: rgba(255,255,255,0.28); }
+        .v2-weak-onPink .v2-weak-name { font-size: 13.5px; }
+        .v2-weak-onPink .v2-weak-sub { color: rgba(255,255,255,0.75); font-size: 11.5px; }
+        .v2-weak-onPink .v2-weak-bar { background: rgba(255,255,255,0.25); margin-top: 5px; }
+        .v2-weak-onPink .v2-weak-bar i { background: #fff; }
+        .v2-weak-onPink .v2-weak-right b { color: #fff; font-size: 15px; }
+        .v2-weak-onPink .v2-delta { background: rgba(255,255,255,0.22); color: #fff; }
+        .v2-empty-onPink { background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.9); }
+        .v2-ai-wide { margin-bottom: 22px; }
+        .v2-ai-thread { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow: auto; padding-right: 4px; }
+        .v2-ai-msg { max-width: 78%; padding: 11px 15px; border-radius: 18px; font-size: 14px; line-height: 1.55; animation: v2PopIn .25s var(--v2-ease) both; }
+        .v2-ai-user { align-self: flex-end; background: var(--v2-violet); color: #fff; border-bottom-right-radius: 5px; }
+        .v2-ai-bot { align-self: flex-start; background: var(--v2-sand); color: var(--c-text-1); border-bottom-left-radius: 5px; }
+        .v2-ai-typing { display: flex; gap: 5px; padding: 10px 4px 0; }
+        .v2-ai-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--v2-violet); opacity: .4; animation: v2Dot 1.2s infinite; }
+        .v2-ai-typing span:nth-child(2) { animation-delay: .2s; } .v2-ai-typing span:nth-child(3) { animation-delay: .4s; }
+        @keyframes v2Dot { 0%,100% { opacity: .3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+        .v2-ai-mic { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--v2-line-soft); background: var(--v2-card); color: var(--v2-violet); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background .2s, transform .2s var(--v2-ease); }
+        .v2-ai-mic:hover { background: var(--v2-violet-soft); transform: scale(1.05); }
+        .v2-ai-mic.listening { background: var(--v2-pink); border-color: var(--v2-pink); color: #fff; animation: v2Pulse 1.6s infinite; }
+        .v2-ai-input { align-items: center; }
+        .v2-ai-input input { padding: 12px 16px; }
+        /* The floating voice widget stays off Home — the AI Companion card IS the companion there. */
+        body.v2-on-home #apexVoiceWidget { display: none !important; }
+        /* Week View: Run sits under the plan text, centred */
+        .v2-run-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 6px 0 26px; }
+        .v2-run-btn { font-size: 16px; padding: 14px 30px; }
+        .v2-run-hint { font-size: 12.5px; color: var(--c-text-2); }
+        @media (max-width: 1180px) { .v2-grid-top-plan { grid-template-columns: 1fr; } }
+
+        /* /V2:CSS */
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
@@ -37307,6 +37910,656 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
             </div>
         </div>
     </div>
+
+<!-- V2:JS -->
+    <!-- ═══════════════════════════════════════════════════════════════════
+         APEX DESIGN SYSTEM v2 — behaviour layer (v2.3, minimal Home)
+         Rebuilds the sidebar + Home dashboard AROUND the existing live nodes
+         (every element the app's JS writes into keeps its id and is only
+         moved, never recreated), adds an idempotent points engine, mirrors
+         the AI voice companion on Home, a ⌘K command palette and keyboard nav.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <script>
+    (function () {
+        'use strict';
+        const $ = (id) => document.getElementById(id);
+        const strip = (el) => { if (el) el.removeAttribute('style'); return el; };
+        const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+        const safe = (fn, fb) => { try { return fn(); } catch (e) { return fb; } };
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const student = () => safe(() => JSON.parse(localStorage.getItem('studentData') || 'null'), null) || {};
+        const lsJson = (k, fb) => safe(() => JSON.parse(localStorage.getItem(k) || 'null'), null) || fb;
+        const toast = (m) => { if (typeof fxToast === 'function') fxToast(m); else if (typeof showToast === 'function') showToast(m); };
+        const today = () => (typeof getTodayString === 'function') ? getTodayString() : new Date().toISOString().slice(0, 10);
+        const tracking = () => safe(() => getTrackingData(), null) || { dailyLogs: [], streak: 0 };
+        const saveTracking = (t) => { if (typeof saveTrackingData === 'function') saveTrackingData(t); else localStorage.setItem('trackingData', JSON.stringify(t)); };
+        // The name shown everywhere on Home: the profile name if set, else the account username (the Firebase key).
+        const displayName = () => ((student().name || '').trim().split(' ')[0]) || safe(() => localStorage.getItem('apexNickname'), '') || 'there';
+        const go = (s) => showSection(s);
+        const isHomeVisible = () => { const s = $('section-home'); return !!(s && s.style.display !== 'none' && $('homePage') && $('homePage').classList.contains('active')); };
+
+        /* ═══════════════ POINTS ENGINE (idempotent, derived from stored facts) ═══════════════ */
+        const RULES = [
+            { icon: '☀️', label: 'Open Apex', pts: '+5 / day' },
+            { icon: '✅', label: 'Complete a planned session', pts: '+10–40' },
+            { icon: '📝', label: 'Save your daily log', pts: '+10' },
+            { icon: '🧠', label: 'Finish a quiz', pts: '+10, +5/10/15 at 50/75/90%' },
+            { icon: '✍️', label: 'Finish a practice set', pts: '+10, same bonus' },
+            { icon: '📖', label: 'Mark a chapter completed', pts: '+30' },
+            { icon: '🔥', label: 'Streak milestones 3·7·14·30·50·100', pts: '+25 → +500' },
+        ];
+        const bonus = (pct) => { pct = +pct || 0; return pct >= 90 ? 15 : pct >= 75 ? 10 : pct >= 50 ? 5 : 0; };
+        function awardOnce(t, key, amount, reason, date) {
+            if (!t.v2Awards) t.v2Awards = {};
+            if (t.v2Awards[key] || !amount) return 0;
+            t.v2Awards[key] = amount;
+            t.totalPoints = Math.max(0, (t.totalPoints || 0) + amount);
+            if (!t.pointsHistory) t.pointsHistory = [];
+            t.pointsHistory.push({ date: date || today(), amount, reason, key });
+            return amount;
+        }
+        function reconcilePoints() {
+            const t = tracking(); const d0 = today(); const sd = student();
+            let gained = 0; const fresh = [];
+            const add = (k, a, r, d) => { const g = awardOnce(t, k, a, r, d || d0); if (g) { gained += g; fresh.push({ amount: g, reason: r }); } };
+            add('open_' + d0, 5, 'Showed up today');
+            (t.dailyLogs || []).forEach(l => { if (l && l.date && (l.mood || l.journal)) add('log_' + l.date, 10, 'Daily log saved', l.date); });
+            lsJson('quizHistory', []).forEach(q => { if (!q || !q.date) return; add('quiz_' + q.date, 10 + bonus(q.pct), 'Quiz · ' + (q.subject || '') + ' ' + Math.round(+q.pct || 0) + '%', String(q.date).slice(0, 10)); });
+            const seen = {};
+            (t.practiceResults || []).forEach(p => { if (!p || !p.date) return; const base = 'prac_' + String(p.date).slice(0, 10) + '_' + p.subject + '_' + p.score + '/' + p.total; seen[base] = (seen[base] || 0) + 1; add(base + '_' + seen[base], 10 + bonus(p.pct), 'Practice · ' + (p.subject || '') + ' ' + Math.round(+p.pct || 0) + '%', String(p.date).slice(0, 10)); });
+            Object.entries(sd.chapterLog || {}).forEach(([subj, m]) => Object.entries(m || {}).forEach(([idx, e]) => { if (e && e.status === 'completed') add('chdone_' + subj + '_' + idx, 30, 'Chapter completed · ' + (e.chapter || subj), (e.loggedAt || '').slice(0, 10) || d0); }));
+            const MS = { 3: 25, 7: 50, 14: 100, 30: 200, 50: 300, 100: 500 };
+            if (MS[t.streak]) add('streak_' + t.streak + '_' + d0, MS[t.streak], t.streak + '-day streak milestone 🔥');
+            if (t.pointsHistory && t.pointsHistory.length > 800) t.pointsHistory = t.pointsHistory.slice(-800);
+            if (gained) { saveTracking(t); try { if (typeof apexSaveStudentPerf === 'function') apexSaveStudentPerf({ updated: Date.now(), totalPoints: t.totalPoints }); } catch (e) {} }
+            return { t, gained, fresh };
+        }
+        const pointsToday = (t) => (t.pointsHistory || []).filter(h => h && h.date === today()).reduce((a, h) => a + (+h.amount || 0), 0);
+
+        /* ═══════════════ SIDEBAR ═══════════════ */
+        function buildSidebar() {
+            const sub = document.querySelector('.sidebar .logo-text-sub');
+            if (sub) sub.textContent = 'STUDY WORKSPACE';
+            ['nav-settings', 'mobnav-settings'].forEach(id => { const n = $(id); if (n) n.style.display = 'none'; });
+            // "Refresh AI · Run" row removed — regeneration lives under the timetable itself now.
+            const runBtn = document.querySelector('.sidebar .restart-icon-btn');
+            const row = runBtn && runBtn.closest('.control-row'); if (row) row.style.display = 'none';
+        }
+
+        /* ═══════════════ WEEK VIEW: Run button lives under the plan text, not in the header ═══════════════ */
+        function buildWeekRun() {
+            const headerRun = document.querySelector('#weekTodaySub button[onclick="regenerateTodayPlan()"]');
+            if (headerRun) headerRun.style.display = 'none';
+            const host = $('planContent'); if (!host) return;
+            const ensure = () => {
+                const hasSessions = host.querySelector('.study-session-box, .plan-card, .session-card');
+                const text = (host.textContent || '').trim();
+                const busy = /generating|thinking|building|loading/i.test(text);
+                const existing = host.querySelector('#v2RunBtn');
+                if (hasSessions || !text || busy) { if (existing) existing.remove(); return; }
+                if (existing) return;
+                const failed = safe(() => !!_apexLastPlanGenError, false);
+                const b = el('button', 'v2-btn-ink v2-run-btn', '↺ ' + (failed ? 'Run again' : 'Run')); b.id = 'v2RunBtn'; b.type = 'button';
+                b.onclick = () => { if (typeof regenerateTodayPlan === 'function') regenerateTodayPlan(); };
+                const wrap = el('div', 'v2-run-wrap'); wrap.appendChild(b);
+                wrap.insertAdjacentHTML('beforeend', '<div class="v2-run-hint">' + (failed ? 'Fix the API key or connection, then retry.' : 'Builds today\'s timetable from your subjects, tests and progress.') + '</div>');
+                host.appendChild(wrap);
+            };
+            new MutationObserver(() => ensure()).observe(host, { childList: true, subtree: true, characterData: true });
+            ensure();
+        }
+
+        /* ═══════════════ HOME DASHBOARD (minimal) ═══════════════ */
+        function buildHome() {
+            const wrap = document.querySelector('#section-home .home-layout-single');
+            if (!wrap || $('v2Home')) return;
+            const hero = $('homeHero'), bodyRow = $('homeBodyDataRow'), twoCol = wrap.querySelector('.home-two-col');
+            const ttCards = $('homeTTCards'), ttCount = $('homeTTCount'), sw = $('homeSWList'), tip = $('homeAITip');
+            const chapter = $('chapterCompleteBanner'), addTest = $('addTestBanner');
+            const askBox = $('askAIBox'), askLoad = $('askAILoading'), askResp = $('askAIResponse');
+            const points = $('homePointsVal'), streakPill = $('homeStreakPill'), examPill = $('homeExamPill');
+
+            const home = el('div'); home.id = 'v2Home';
+            home.innerHTML =
+                '<div class="v2-home-head">' +
+                    '<div><div class="v2-date" id="v2Date"></div><h1 class="v2-greet" id="v2Greet">Hello</h1></div>' +
+                    '<div class="v2-head-actions">' +
+                        '<button class="v2-btn-ink" id="v2SettingsBtn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</button>' +
+                        '<div class="v2-avatar" id="v2Avatar" title="Profile & settings"></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="v2-grid-top v2-grid-top-plan">' +
+                    '<div class="v2-hero" id="v2Hero">' +
+                        '<div class="v2-blob v2-blob-1"></div><div class="v2-blob v2-blob-2"></div><div class="v2-blob v2-blob-3"></div>' +
+                        '<div class="v2-hero-inner">' +
+                            '<div>' +
+                                '<div class="v2-hero-status v2-idle"><i></i><span>Today at a glance</span></div>' +
+                                '<div class="v2-hero-title" id="v2HeroTitle">Welcome back</div>' +
+                                '<div class="v2-hero-sub" id="v2HeroSub">Here are your points for today.</div>' +
+                                '<div class="v2-hero-meta" id="v2HeroMeta"></div>' +
+                                '<button class="v2-link-btn v2-link-onDark" id="v2RulesBtn" type="button">How points work ›</button>' +
+                            '</div>' +
+                            '<div class="v2-timer v2-points-big">' +
+                                '<div class="v2-timer-num" id="v2PtsToday">0</div>' +
+                                '<div class="v2-timer-sub" id="v2PtsTodaySub">points today</div>' +
+                                '<div class="v2-timer-ring"><i id="v2PtsBar"></i></div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="v2-rules v2-rules-onDark" id="v2Rules" style="display:none;"></div>' +
+                    '</div>' +
+                    '<div class="v2-card v2-clickable v2-plan-card" id="v2PlanCard"><div class="v2-card-title"><span>Today\'s plan</span><span style="display:flex;align-items:center;gap:8px;"><span class="v2-count" id="v2PlanCountHost"></span><span class="v2-arrow">›</span></span></div><div id="v2PlanHost"></div></div>' +
+                '</div>' +
+                '<div class="v2-grid-3 v2-stagger">' +
+                    '<div class="v2-card v2-stat v2-stat-white v2-clickable" id="v2CommTile">' +
+                        '<div class="v2-stat-icon v2-stat-icon-comm">💬</div>' +
+                        '<div class="v2-stat-label">Community</div>' +
+                        '<div class="v2-stat-num" id="v2CommNum">—</div>' +
+                        '<div class="v2-stat-sub" id="v2CommSub">Checking your chats…</div>' +
+                        '<div class="v2-comm-latest" id="v2CommLatest"></div>' +
+                    '</div>' +
+                    '<div class="v2-card v2-stat v2-stat-yellow v2-clickable" id="v2StreakTile">' +
+                        '<div class="v2-stat-icon v2-stat-icon-pts">🔥</div>' +
+                        '<div class="v2-stat-label">Study streak</div>' +
+                        '<div class="v2-stat-num" id="v2StreakDays">0<small>days</small></div>' +
+                        '<div class="v2-stat-sub" id="v2StreakTileSub"></div>' +
+                        '<div class="v2-pill-row v2-pill-row-ink" id="v2PillHost"></div>' +
+                        '<div class="v2-bar" style="margin-top:14px;"><i id="v2StreakTileBar"></i></div>' +
+                    '</div>' +
+                    '<div class="v2-card v2-stat v2-stat-pink v2-weak-tile" id="v2WeakCard">' +
+                        '<div class="v2-stat-label">Chapters to fix</div>' +
+                        '<div class="v2-weak v2-weak-onPink" id="v2WeakList"></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="v2-card v2-ai v2-ai-wide" id="v2AiCard">' +
+                    '<div class="v2-card-title"><span class="v2-ai-title"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg>AI Companion</span><span class="v2-online"><i></i>Online</span></div>' +
+                    '<div class="v2-ai-thread" id="v2AiThread"></div>' +
+                    '<div class="v2-ai-typing" id="v2AiTyping" style="display:none;"><span></span><span></span><span></span></div>' +
+                    '<div class="v2-ai-input" id="v2AiInputRow">' +
+                        '<button class="v2-ai-mic" id="v2AiMic" type="button" title="Tap to talk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>' +
+                        '<input id="v2AiInput" placeholder="Ask about anything unclear — a concept, a question, a topic…" autocomplete="off">' +
+                        '<button class="v2-btn-yellow" id="v2AiSend" type="button">Ask</button>' +
+                    '</div>' +
+                    '<div class="v2-ai-actions"><button class="v2-btn-ink" id="v2AiClear" type="button">Clear chat</button><button class="v2-btn-yellow" id="v2AiHint" type="button">Hint</button></div>' +
+                '</div>' +
+                '<div id="v2Compat" style="display:none;"></div>';
+
+            wrap.insertBefore(home, wrap.firstChild);
+
+            const move = (node, hostId, stripStyle) => { const h = $(hostId); if (node && h) { if (stripStyle) strip(node); h.appendChild(node); } };
+            move(ttCards, 'v2PlanHost', true);
+            move(ttCount, 'v2PlanCountHost', true);
+            move(streakPill, 'v2PillHost', true);
+            move(examPill, 'v2PillHost', true);
+
+            // Everything the app still writes to but the new Home doesn't show: parked, hidden, intact.
+            const compat = $('v2Compat');
+            [hero, twoCol, bodyRow, sw, tip, chapter, addTest, askBox, askLoad, askResp, points, 'yesterdaySummary', 'incompletionBanner', 'homeExamAlert', 'doneForTodayCard']
+                .map(x => typeof x === 'string' ? $(x) : x).forEach(n => { if (n) compat.appendChild(n); });
+
+            $('v2Rules').innerHTML = RULES.map(r => '<div class="v2-rule"><span class="v2-rule-ic">' + r.icon + '</span><span>' + esc(r.label) + '</span><b>' + esc(r.pts) + '</b></div>').join('') +
+                '<div class="v2-rule-note">Points only ever go up. Each activity is awarded exactly once, so nothing double-counts.</div>';
+            $('v2RulesBtn').onclick = () => { const r = $('v2Rules'); const open = r.style.display !== 'none'; r.style.display = open ? 'none' : 'block'; $('v2RulesBtn').textContent = open ? 'How points work ›' : 'Hide ‹'; };
+            $('v2SettingsBtn').onclick = () => go('settings');
+            $('v2Avatar').onclick = () => go('settings');
+            $('v2PlanCard').onclick = (e) => { if (e.target.closest('button,a,input')) return; if (typeof goToTodayTimetable === 'function') goToTodayTimetable(); };
+            $('v2CommTile').onclick = () => go('community');
+            $('v2StreakTile').onclick = () => go('log');
+            buildAi();
+        }
+
+        function syncHome() {
+            const now = new Date(); const name = displayName();
+            const set = (id, v) => { const n = $(id); if (n) n.textContent = v; };
+            set('v2Date', now.toLocaleDateString('en-GB', { weekday: 'long' }) + ', ' + now.getDate() + ' ' + now.toLocaleDateString('en-GB', { month: 'long' }));
+            // Plain time-of-day greeting + the saved username (no random phrases like "One more session?").
+            const h = now.getHours(); const greet = h < 5 ? 'Still up' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 21 ? 'Good evening' : 'Good night';
+            if ($('v2Greet')) $('v2Greet').innerHTML = esc(greet) + ', ' + esc(name) + ' <span class="v2-wave">👋</span>';
+            const av = $('v2Avatar');
+            if (av) { const img = safe(() => localStorage.getItem('apexAvatarImage'), null); av.innerHTML = img ? '<img src="' + img + '" alt="">' : esc((name[0] || 'A').toUpperCase()); }
+
+            const res = reconcilePoints();
+            const t = res.t; const total = t.totalPoints || 0; const tod = pointsToday(t);
+            if (res.gained && document.body.classList.contains('v2-ready')) toast('+' + res.gained + ' pts' + (res.fresh.length === 1 ? ' · ' + res.fresh[0].reason : ' earned since your last visit'));
+            if ($('homePointsVal')) $('homePointsVal').textContent = total.toLocaleString();
+            const hist = t.pointsHistory || [];
+            const byDay = {}; hist.forEach(h => { if (h && h.date) byDay[h.date] = (byDay[h.date] || 0) + (+h.amount || 0); });
+            const bestDay = Math.max(tod, ...Object.values(byDay), 0);
+            const todayN = hist.filter(h => h && h.date === today()).length;
+            set('v2HeroTitle', 'Welcome back, ' + name);
+            set('v2HeroSub', tod > 0 ? 'Here are your points for today — nice momentum.' : 'Here are your points for today. Finish a session or a quiz to earn more.');
+            if ($('v2HeroMeta')) $('v2HeroMeta').innerHTML = '<span>' + total.toLocaleString() + ' total</span><span>' + todayN + (todayN === 1 ? ' activity today' : ' activities today') + '</span><span>best day ' + bestDay.toLocaleString() + '</span>';
+            set('v2PtsToday', (tod > 0 ? '+' : '') + tod);
+            set('v2PtsTodaySub', tod === 1 ? 'point today' : 'points today');
+            if ($('v2PtsBar')) $('v2PtsBar').style.width = (bestDay ? Math.min(100, Math.round(tod / bestDay * 100)) : 0) + '%';
+
+            syncStreak();
+            renderWeakChapters();
+            loadCommunityStatus();
+            renderAiThread();
+        }
+        function syncStreak() {
+            const t = tracking(); const s = t.streak || 0;
+            let best = parseInt(localStorage.getItem('apexV2BestStreak') || '0', 10) || 0;
+            if (s > best) { best = s; try { localStorage.setItem('apexV2BestStreak', String(best)); } catch (e) {} }
+            if ($('v2StreakDays')) $('v2StreakDays').innerHTML = s + '<small>' + (s === 1 ? 'day' : 'days') + '</small>';
+            if ($('v2StreakTileSub')) $('v2StreakTileSub').textContent = s === 0 ? 'Study today to start a streak' : s >= best ? 'Personal best — keep it alive!' : 'Best run: ' + best + ' days';
+            if ($('v2StreakTileBar')) $('v2StreakTileBar').style.width = (best ? Math.min(100, Math.round(s / best * 100)) : 0) + '%';
+        }
+
+        /* ═══════════════ COMMUNITY TILE — unread chats, invites, latest message ═══════════════ */
+        let _commAt = 0, _commBusy = false;
+        async function loadCommunityStatus(force) {
+            if (_commBusy || (!force && Date.now() - _commAt < 60000)) return;
+            if (typeof apexFb === 'undefined' || typeof apexCommunityUserKey !== 'function') return;
+            const me = safe(() => apexCommunityUserKey(), ''); if (!me || me === 'guest') { renderComm({ unread: 0, invites: 0, latest: null, chats: 0 }); return; }
+            _commBusy = true;
+            try {
+                const [groups, pending, dmIndex] = await Promise.all([apexFb.get('apex/community/groups'), apexFb.get('apex/community/pending/' + encodeURIComponent(me)), apexFb.get('apex/community/dmIndex/' + encodeURIComponent(me))]);
+                const left = safe(() => apexCommGetLeftBaseChats(), []) || [];
+                const base = safe(() => COMM_BASE_CHATS, []) || [];
+                let unread = 0, chats = 0, latest = null;
+                const consider = (id, name, msgs) => {
+                    const list = Object.values(msgs || {}).filter(m => m && m.createdAt);
+                    if (!list.length) return;
+                    chats++;
+                    const last = list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+                    if (safe(() => apexCommIsUnread(id, last), false)) unread++;
+                    if (last.sender !== me && (!latest || last.createdAt > latest.createdAt)) latest = { ...last, chat: name };
+                };
+                Object.entries(groups || {}).forEach(([id, node]) => {
+                    const meta = (node && node.meta) || {};
+                    const isBase = base.some(c => c.id === id);
+                    if (isBase && id !== 'all' && left.includes(id)) return;
+                    if (!isBase && meta.type && !(node.members && node.members[me])) return;
+                    const name = isBase ? (base.find(c => c.id === id) || {}).name : (meta.name || id);
+                    consider(id, name, node && node.messages);
+                });
+                const others = Object.keys(dmIndex || {});
+                const dmNodes = await Promise.all(others.map(o => safe(() => apexFb.get(apexCommPathFor('dm:' + o) + '/messages'), null)));
+                others.forEach((o, i) => consider('dm:' + o, '@' + o, dmNodes[i]));
+                renderComm({ unread, invites: Object.keys(pending || {}).length, latest, chats });
+                _commAt = Date.now();
+            } catch (e) { console.warn('[v2] community status', e); renderComm(null); }
+            finally { _commBusy = false; }
+        }
+        function renderComm(s) {
+            const num = $('v2CommNum'), sub = $('v2CommSub'), lat = $('v2CommLatest'); if (!num) return;
+            if (!s) { num.textContent = '—'; sub.textContent = 'Couldn\'t reach the community right now'; lat.innerHTML = ''; return; }
+            const n = s.unread + s.invites;
+            num.innerHTML = n ? n + '<small>new</small>' : 'All caught up';
+            const bits = [];
+            if (s.unread) bits.push(s.unread + (s.unread === 1 ? ' unread chat' : ' unread chats'));
+            if (s.invites) bits.push(s.invites + (s.invites === 1 ? ' invite waiting' : ' invites waiting'));
+            sub.textContent = bits.length ? bits.join(' · ') : (s.chats ? 'No new messages in your chats' : 'Say hi in All Students');
+            const when = (ts) => safe(() => window.apexV2Community.fmtWhen(ts, { short: true }), '');
+            lat.innerHTML = s.latest ? '<span class="v2-comm-who">' + esc(s.latest.sender) + '</span> in ' + esc(s.latest.chat) + ' · ' + esc(when(s.latest.createdAt)) + '<div class="v2-comm-text">' + esc((s.latest.text || (s.latest.image ? '📷 Photo' : s.latest.type === 'mcq' ? '❓ Quiz question' : '')).slice(0, 90)) + '</div>' : '';
+            $('v2CommTile').classList.toggle('v2-tile-hot', n > 0);
+        }
+
+        /* ═══════════════ WEAK CHAPTERS (chapter-level, with change) ═══════════════ */
+        function chapterName(ch) { return typeof ch === 'string' ? ch : (ch && (ch.name || ch.title || ch.chapter)) || String(ch); }
+        function computeWeakChapters() {
+            const sd = student(); const quizzes = lsJson('quizHistory', []); const out = [];
+            (sd.subjects || []).forEach(s => {
+                const sname = typeof s === 'string' ? s : s.name;
+                const chapters = safe(() => apexGetChaptersForSubject(s), []) || [];
+                chapters.forEach((ch, i) => {
+                    const cn = chapterName(ch);
+                    const pct = safe(() => apexGetChapterQPct(sname, i, cn, quizzes), null);
+                    if (pct === null || pct === undefined) return;
+                    const sc = lsJson('chScore_' + sname + '_' + i, null);
+                    out.push({ subject: sname, chapter: cn, idx: i, pct: Math.round(pct), best: sc && sc.best != null ? sc.best : null, key: sname + '|' + i });
+                });
+            });
+            const ws = safe(() => apexWeekStartISO(), today());
+            let snap = lsJson('apexV2ChapterSnap', null) || { weekStart: null, by: {}, prev: {} };
+            if (snap.weekStart !== ws) snap = { weekStart: ws, by: {}, prev: snap.by || {} };
+            out.forEach(c => { snap.by[c.key] = c.pct; });
+            try { localStorage.setItem('apexV2ChapterSnap', JSON.stringify(snap)); } catch (e) {}
+            out.forEach(c => {
+                if (snap.prev && snap.prev[c.key] != null) { c.delta = c.pct - snap.prev[c.key]; c.deltaKind = 'week'; }
+                else if (c.best != null && c.best > c.pct) { c.delta = c.pct - c.best; c.deltaKind = 'best'; }
+                else c.delta = null;
+            });
+            return out.sort((a, b) => a.pct - b.pct || (a.delta || 0) - (b.delta || 0));
+        }
+        function renderWeakChapters() {
+            const host = $('v2WeakList'); if (!host) return;
+            const list = computeWeakChapters().slice(0, 4);
+            if (!list.length) { host.innerHTML = '<div class="v2-empty v2-empty-onPink">No chapter scores yet — do a practice set or quiz and your weakest chapters show up here.</div>'; return; }
+            host.innerHTML = list.map(c => {
+                let chip = '<span class="v2-delta">new</span>';
+                if (c.delta !== null && c.delta !== undefined) chip = c.delta < 0 ? '<span class="v2-delta v2-delta-down">▼ ' + Math.abs(c.delta) + '</span>' : c.delta > 0 ? '<span class="v2-delta v2-delta-up">▲ ' + c.delta + '</span>' : '<span class="v2-delta">flat</span>';
+                return '<div class="v2-weak-row" data-subject="' + esc(c.subject) + '" data-chapter="' + esc(c.chapter) + '">' +
+                    '<div class="v2-weak-main"><div class="v2-weak-name">' + esc(c.chapter) + '</div><div class="v2-weak-sub">' + esc(c.subject) + '</div><div class="v2-weak-bar"><i style="width:' + c.pct + '%;"></i></div></div>' +
+                    '<div class="v2-weak-right"><b>' + c.pct + '%</b>' + chip + '</div></div>';
+            }).join('');
+            host.querySelectorAll('.v2-weak-row').forEach(r => r.onclick = (e) => { e.stopPropagation(); if (typeof navigateToChapterNotes === 'function') { go('notes'); setTimeout(() => navigateToChapterNotes({ subject: r.dataset.subject, topic: r.dataset.chapter }), 120); } else go('notes'); });
+        }
+
+        /* ═══════════════ AI COMPANION on Home — the same conversation as the floating voice widget ═══════════════ */
+        let _micPoll = null;
+        function buildAi() {
+            const input = $('v2AiInput'); if (!input) return;
+            const send = () => { const text = input.value.trim(); if (!text) return; input.value = ''; syncWidgetInput(''); if (typeof apexVoiceStopListening === 'function') safe(() => apexVoiceStopListening()); if (typeof apexVoiceSend === 'function') apexVoiceSend(text); };
+            $('v2AiSend').onclick = send;
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+            $('v2AiClear').onclick = () => { if (typeof apexVoiceClear === 'function') apexVoiceClear(); else renderAiThread(); input.value = ''; };
+            $('v2AiHint').onclick = () => {
+                const hints = ['Which subject should I start with today and why?', 'Summarise my weak spots and give me one fix for each.', 'How should I split the next 2 hours?', 'Give me a 3-question warm-up for my weakest chapter.'];
+                input.value = hints[Math.floor(Math.random() * hints.length)]; send();
+            };
+            $('v2AiMic').onclick = () => {
+                if (typeof apexVoiceMicToggle !== 'function') { toast('Voice input isn\'t available here — type instead'); return; }
+                syncWidgetInput(input.value);
+                apexVoiceMicToggle();
+                clearInterval(_micPoll);
+                _micPoll = setInterval(() => {
+                    const listening = safe(() => apexVoiceListening, false);
+                    $('v2AiMic').classList.toggle('listening', !!listening);
+                    const w = $('apexVoiceTextInput'); if (w && listening) input.value = w.value;
+                    if (!listening) { clearInterval(_micPoll); _micPoll = null; }
+                }, 250);
+            };
+            // Mirror the widget's own render so Home always shows the live conversation.
+            if (typeof window.apexVoiceRender === 'function' && !window.apexVoiceRender.__v2) {
+                const orig = window.apexVoiceRender;
+                window.apexVoiceRender = function () { const r = orig.apply(this, arguments); try { renderAiThread(); } catch (e) {} return r; };
+                window.apexVoiceRender.__v2 = true;
+            }
+            if (typeof window.apexVoiceSend === 'function' && !window.apexVoiceSend.__v2) {
+                const orig = window.apexVoiceSend;
+                window.apexVoiceSend = async function () { const t = $('v2AiTyping'); if (t) t.style.display = 'flex'; try { return await orig.apply(this, arguments); } finally { if (t) t.style.display = 'none'; renderAiThread(); } };
+                window.apexVoiceSend.__v2 = true;
+            }
+        }
+        function syncWidgetInput(v) { const w = $('apexVoiceTextInput'); if (w) { w.value = v; if (typeof apexVoiceUpdateSendBtn === 'function') safe(() => apexVoiceUpdateSendBtn()); } }
+        function renderAiThread() {
+            const host = $('v2AiThread'); if (!host) return;
+            const msgs = safe(() => apexVoiceMessages, []) || [];
+            if (!msgs.length) {
+                const tipEl = $('homeAITip'); const tip = tipEl && tipEl.innerHTML && !/Loading/i.test(tipEl.textContent) ? tipEl.innerHTML : 'Ask about anything unclear — a concept, a question, a topic you\'re stuck on. Tap the mic to talk, or type below.';
+                host.innerHTML = '<div class="v2-ai-tip"><span class="v2-ai-name">Apex AI: </span>' + tip + '</div>';
+                return;
+            }
+            host.innerHTML = msgs.map(m => '<div class="v2-ai-msg ' + (m.role === 'user' ? 'v2-ai-user' : 'v2-ai-bot') + '">' + (m.role === 'user' ? '' : '<span class="v2-ai-name">Apex AI: </span>') + esc(m.text || '').replace(/\n/g, '<br>') + '</div>').join('');
+            host.scrollTop = host.scrollHeight;
+        }
+
+        /* ═══════════════ COMMAND PALETTE (⌘K) ═══════════════ */
+        const CMDS = [
+            { ic: '🏠', label: 'Home', hint: '1', run: () => go('home') },
+            { ic: '📅', label: 'Week View', hint: '2', run: () => go('week') },
+            { ic: '📚', label: 'Resources · notes, quizzes, flashcards', hint: '3', run: () => go('notes') },
+            { ic: '📈', label: 'Metrics', hint: '4', run: () => go('metrics') },
+            { ic: '📝', label: 'Daily Log', hint: '5', run: () => go('log') },
+            { ic: '💬', label: 'Community', hint: '6', run: () => go('community') },
+            { ic: '⚙️', label: 'Settings', hint: '7', run: () => go('settings') },
+            { ic: '➕', label: 'Add a test', hint: '', run: () => { if (typeof atOpen === 'function') atOpen(); } },
+            { ic: '📖', label: 'Log chapter progress', hint: '', run: () => { if (typeof openChapterCompleteModal === 'function') openChapterCompleteModal(); } },
+            { ic: '✨', label: 'Regenerate today\'s plan', hint: '', run: () => { go('week'); setTimeout(() => { if (typeof regenerateTodayPlan === 'function') regenerateTodayPlan(); }, 100); } },
+            { ic: '🌗', label: 'Toggle dark mode', hint: '', run: () => { if (typeof toggleDarkMode === 'function') toggleDarkMode(null); } },
+        ];
+        let kSel = 0, kItems = [];
+        function buildPalette() {
+            if ($('v2KBar')) return;
+            const w = el('div', 'v2-kbar-wrap'); w.id = 'v2KBar';
+            w.innerHTML = '<div class="v2-kbar"><input id="v2KInput" placeholder="Jump to a page or run an action…" autocomplete="off"><div class="v2-kbar-list" id="v2KList"></div><div class="v2-kbar-foot"><span><span class="v2-kbd">↑↓</span>navigate</span><span><span class="v2-kbd">↵</span>open</span><span><span class="v2-kbd">esc</span>close</span><span style="margin-left:auto;">Press <span class="v2-kbd">1–7</span> anywhere to switch pages</span></div></div>';
+            document.body.appendChild(w);
+            w.addEventListener('click', (e) => { if (e.target === w) closePalette(); });
+            $('v2KInput').addEventListener('input', () => renderPalette($('v2KInput').value));
+            $('v2KInput').addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown') { e.preventDefault(); kSel = Math.min(kItems.length - 1, kSel + 1); paintSel(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); kSel = Math.max(0, kSel - 1); paintSel(); }
+                else if (e.key === 'Enter') { e.preventDefault(); if (kItems[kSel]) { closePalette(); kItems[kSel].run(); } }
+                else if (e.key === 'Escape') closePalette();
+            });
+            const fab = el('button', 'v2-kbar-fab', '<span class="v2-kbd" style="margin:0;">⌘K</span> Quick actions'); fab.type = 'button';
+            fab.onclick = openPalette; document.body.appendChild(fab);
+        }
+        function renderPalette(q) {
+            q = (q || '').trim().toLowerCase();
+            kItems = CMDS.filter(c => !q || c.label.toLowerCase().includes(q)); kSel = 0;
+            $('v2KList').innerHTML = kItems.map((c, i) => '<div class="v2-kbar-item' + (i === 0 ? ' sel' : '') + '" data-i="' + i + '"><span class="v2-kbar-ic">' + c.ic + '</span>' + c.label + '<span class="v2-kbar-hint">' + c.hint + '</span></div>').join('') || '<div style="padding:18px;color:var(--c-text-2);font-weight:600;">No matches</div>';
+            $('v2KList').querySelectorAll('.v2-kbar-item').forEach(n => n.onclick = () => { closePalette(); kItems[+n.dataset.i].run(); });
+        }
+        function paintSel() { $('v2KList').querySelectorAll('.v2-kbar-item').forEach((n, i) => n.classList.toggle('sel', i === kSel)); }
+        function openPalette() { buildPalette(); $('v2KBar').classList.add('open'); $('v2KInput').value = ''; renderPalette(''); setTimeout(() => $('v2KInput').focus(), 20); }
+        function closePalette() { const w = $('v2KBar'); if (w) w.classList.remove('open'); }
+        const typing = () => { const a = document.activeElement; return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable); };
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); const w = $('v2KBar'); (w && w.classList.contains('open')) ? closePalette() : openPalette(); return; }
+            if (e.key === 'Escape') { closePalette(); return; }
+            const homeActive = $('homePage') && $('homePage').classList.contains('active');
+            if (!homeActive || typing() || e.metaKey || e.ctrlKey || e.altKey) return;
+            if (document.querySelector('.modal.active, .modal[style*="display: flex"], .modal[style*="display:flex"]')) return;
+            const map = { '1': 'home', '2': 'week', '3': 'notes', '4': 'metrics', '5': 'log', '6': 'community', '7': 'settings' };
+            if (map[e.key]) go(map[e.key]);
+        });
+
+        /* ═══════════════ WRAP APP FUNCTIONS ═══════════════ */
+        function wrapFn(name, after) {
+            const orig = window[name];
+            if (typeof orig !== 'function' || orig.__v2) return;
+            window[name] = function () { const r = orig.apply(this, arguments); try { after(r, arguments); } catch (e) { console.warn('[v2] ' + name, e); } return r; };
+            window[name].__v2 = true;
+        }
+        const syncHomeFlag = () => document.body.classList.toggle('v2-on-home', isHomeVisible());
+        function init() {
+            try { buildSidebar(); } catch (e) { console.warn('[v2] sidebar', e); }
+            try { buildHome(); } catch (e) { console.warn('[v2] home', e); }
+            try { buildWeekRun(); } catch (e) { console.warn('[v2] week run', e); }
+            wrapFn('loadHomePage', () => syncHome());
+            wrapFn('showSection', () => { syncHomeFlag(); const mc = $('mainContent'); if (mc) mc.scrollTo({ top: 0, behavior: 'smooth' }); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+            wrapFn('showHomePage', () => syncHomeFlag());
+            wrapFn('saveDailyLog', () => { const r = reconcilePoints(); if (r.gained) toast('+' + r.gained + ' pts · ' + r.fresh[0].reason); syncStreak(); });
+            wrapFn('markSession', () => { if (isHomeVisible()) syncHome(); else syncStreak(); });
+            wrapFn('apexCommMarkRead', () => { _commAt = 0; });
+            buildPalette();
+            try { syncHome(); } catch (e) { console.warn('[v2] syncHome', e); }
+            syncHomeFlag();
+            window.addEventListener('storage', (e) => { if (e.key === 'trackingData') syncStreak(); });
+            setInterval(() => { if (isHomeVisible()) loadCommunityStatus(); }, 90000);
+            document.body.classList.add('v2-ready');
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+        window.apexV2 = { syncHome, syncStreak, openPalette, reconcilePoints, computeWeakChapters, loadCommunityStatus, renderAiThread };
+    })();
+    </script>
+
+    <!-- ═══ v2.2 — Community: username suggestions, message timestamps ═══ -->
+    <script>
+    (function () {
+        'use strict';
+        const $ = (id) => document.getElementById(id);
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const safe = (fn, fb) => { try { return fn(); } catch (e) { return fb; } };
+        const me = () => safe(() => apexCommunityUserKey(), '') || '';
+        const toast = (m) => { if (typeof fxToast === 'function') fxToast(m); };
+
+        /* ── Username directory: one shallow read of apex/users, cached 10 min ── */
+        let _users = null, _usersAt = 0, _usersReq = null;
+        function loadUsers(force) {
+            const cached = safe(() => JSON.parse(localStorage.getItem('apexV2UserList') || 'null'), null);
+            if (!force && cached && Date.now() - (cached.at || 0) < 10 * 60 * 1000) { _users = cached.list; _usersAt = cached.at; return Promise.resolve(_users); }
+            if (_usersReq) return _usersReq;
+            _usersReq = fetch(APEX_DB + '/apex/users.json?shallow=true').then(r => r.json()).then(obj => {
+                _users = Object.keys(obj || {}).filter(Boolean).sort((a, b) => a.localeCompare(b));
+                _usersAt = Date.now();
+                try { localStorage.setItem('apexV2UserList', JSON.stringify({ at: _usersAt, list: _users })); } catch (e) {}
+                return _users;
+            }).catch(() => (_users || (cached && cached.list) || [])).finally(() => { _usersReq = null; });
+            return _usersReq;
+        }
+        function matchUsers(q, exclude) {
+            q = (q || '').trim().toLowerCase();
+            const ex = new Set([me(), ...(exclude || [])].map(s => String(s).toLowerCase()));
+            const list = (_users || []).filter(u => !ex.has(u.toLowerCase()));
+            if (!q) return list.slice(0, 8);
+            const starts = list.filter(u => u.toLowerCase().startsWith(q));
+            const contains = list.filter(u => !u.toLowerCase().startsWith(q) && u.toLowerCase().includes(q));
+            return starts.concat(contains).slice(0, 8);
+        }
+        const avatar = (u) => { const col = safe(() => apexCommColorForUser(u), '#6A4CF5'); return '<span class="v2-suggest-av" style="background:' + col + ';">' + esc(u[0].toUpperCase()) + '</span>'; };
+        function highlight(u, q) { if (!q) return esc(u); const i = u.toLowerCase().indexOf(q.toLowerCase()); if (i < 0) return esc(u); return esc(u.slice(0, i)) + '<b>' + esc(u.slice(i, i + q.length)) + '</b>' + esc(u.slice(i + q.length)); }
+
+        /* attachSuggest(input, {exclude(), onPick(username)}) → dropdown under the input, ↑↓ ↵ esc */
+        function attachSuggest(input, opts) {
+            if (!input || input.__v2Suggest) return input && input.__v2Suggest;
+            const wrap = input.parentElement;
+            if (wrap && !wrap.classList.contains('v2-suggest-wrap')) wrap.classList.add('v2-suggest-wrap');
+            const panel = document.createElement('div'); panel.className = 'v2-suggest'; panel.style.display = 'none';
+            (wrap || document.body).appendChild(panel);
+            let items = [], sel = 0, enabled = true;
+            const hide = () => { panel.style.display = 'none'; panel.innerHTML = ''; };
+            const render = () => {
+                if (!enabled) return hide();
+                const q = input.value.trim();
+                items = matchUsers(q, opts.exclude ? opts.exclude() : []);
+                if (!_users) { panel.innerHTML = '<div class="v2-suggest-note">Loading students…</div>'; panel.style.display = 'block'; return; }
+                if (!items.length) { panel.innerHTML = q ? '<div class="v2-suggest-note">No student called “' + esc(q) + '”</div>' : ''; panel.style.display = q ? 'block' : 'none'; return; }
+                sel = Math.min(sel, items.length - 1);
+                panel.innerHTML = items.map((u, i) => '<div class="v2-suggest-item' + (i === sel ? ' sel' : '') + '" data-u="' + esc(u) + '">' + avatar(u) + '<span>' + highlight(u, q) + '</span><span class="v2-suggest-hint">' + (i === sel ? '↵' : '') + '</span></div>').join('');
+                panel.style.display = 'block';
+                panel.querySelectorAll('.v2-suggest-item').forEach(n => n.onmousedown = (e) => { e.preventDefault(); pick(n.dataset.u); });
+            };
+            const pick = (u) => { hide(); opts.onPick(u); };
+            input.addEventListener('input', () => { sel = 0; render(); });
+            input.addEventListener('focus', () => { loadUsers().then(render); render(); });
+            input.addEventListener('blur', () => setTimeout(hide, 120));
+            input.addEventListener('keydown', (e) => {
+                if (panel.style.display === 'none' || !items.length) return;
+                if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % items.length; render(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); sel = (sel - 1 + items.length) % items.length; render(); }
+                else if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); pick(items[sel]); }
+                else if (e.key === 'Escape') hide();
+            }, true);
+            input.__v2Suggest = { setEnabled: (v) => { enabled = v; if (!v) hide(); }, refresh: render };
+            return input.__v2Suggest;
+        }
+
+        /* DM request box ("+" → Direct message): suggestions while typing, Enter/click fills + sends */
+        function wrapPlusPick() {
+            const orig = window.apexCommunityPlusPick;
+            if (typeof orig !== 'function' || orig.__v2) return;
+            window.apexCommunityPlusPick = function (intent) {
+                const r = orig.apply(this, arguments);
+                const input = $('commNewChatName');
+                if (input) {
+                    const s = attachSuggest(input, { exclude: () => [], onPick: (u) => { input.value = u; if (typeof apexCommunityCreateChatSubmit === 'function') apexCommunityCreateChatSubmit(); } });
+                    s.setEnabled(intent === 'dm');
+                    if (intent === 'dm') { loadUsers().then(() => s.refresh()); }
+                }
+                return r;
+            };
+            window.apexCommunityPlusPick.__v2 = true;
+        }
+
+        /* Invite to group: replaces the native prompt() with a searchable picker */
+        function openInvitePicker() {
+            const menu = $('commHostMenu'); if (menu) menu.style.display = 'none';
+            const meta = safe(() => _apexCommGroupsMeta[_apexCommActiveChat], null);
+            const members = Object.keys((meta && meta.members) || {});
+            let ov = $('v2InviteOverlay');
+            if (!ov) {
+                ov = document.createElement('div'); ov.id = 'v2InviteOverlay'; ov.className = 'v2-invite-overlay';
+                ov.innerHTML = '<div class="v2-invite-card"><button class="v2-invite-close" type="button" id="v2InviteClose">×</button><h3>Add a member</h3><p>Start typing a username — matching students appear below. They get an invite to accept.</p><div class="v2-suggest-wrap"><input id="v2InviteInput" placeholder="Search students…" autocomplete="off"></div><div class="v2-invite-list" id="v2InviteList"></div></div>';
+                document.body.appendChild(ov);
+                ov.addEventListener('click', (e) => { if (e.target === ov) closeInvite(); });
+                $('v2InviteClose').onclick = closeInvite;
+                const input = $('v2InviteInput');
+                const renderList = () => {
+                    const q = input.value.trim();
+                    const list = _users ? matchUsers(q, members).slice(0, 12) : [];
+                    const host = $('v2InviteList');
+                    if (!_users) { host.innerHTML = '<div class="v2-suggest-note">Loading students…</div>'; return; }
+                    host.innerHTML = list.length ? list.map(u => '<div class="v2-suggest-item" data-u="' + esc(u) + '">' + avatar(u) + '<span>' + highlight(u, q) + '</span><span class="v2-suggest-hint">Invite →</span></div>').join('')
+                        : '<div class="v2-suggest-note">' + (q ? 'No student called “' + esc(q) + '”' : 'No other students yet') + '</div>';
+                    host.querySelectorAll('.v2-suggest-item').forEach(n => n.onclick = () => { closeInvite(); apexCommunityInviteToGroup(n.dataset.u); });
+                };
+                input.addEventListener('input', renderList);
+                input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = $('v2InviteList').querySelector('.v2-suggest-item'); if (first) first.click(); } if (e.key === 'Escape') closeInvite(); });
+                ov.__render = renderList;
+            }
+            ov.__members = members;
+            ov.style.display = 'flex';
+            const input = $('v2InviteInput'); input.value = ''; ov.__render(); loadUsers(true).then(ov.__render);
+            setTimeout(() => input.focus(), 30);
+        }
+        function closeInvite() { const ov = $('v2InviteOverlay'); if (ov) ov.style.display = 'none'; }
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeInvite(); });
+
+        /* ── Timestamps: "just now" → "5 minutes ago" → "Yesterday" → "Thursday" → "10th August" ── */
+        const ord = (d) => d + (d % 10 === 1 && d !== 11 ? 'st' : d % 10 === 2 && d !== 12 ? 'nd' : d % 10 === 3 && d !== 13 ? 'rd' : 'th');
+        const clock = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        const dayKey = (d) => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+        function daysBetween(a, b) { const x = new Date(a.getFullYear(), a.getMonth(), a.getDate()), y = new Date(b.getFullYear(), b.getMonth(), b.getDate()); return Math.round((y - x) / 86400000); }
+        function fmtWhen(ts, opts) {
+            opts = opts || {};
+            if (!ts) return '';
+            const d = new Date(ts), now = new Date();
+            const s = Math.max(0, (now - d) / 1000);
+            if (s < 60) return 'just now';
+            const m = Math.floor(s / 60);
+            if (m < 60) return m + (m === 1 ? ' minute ago' : ' minutes ago');
+            const days = daysBetween(d, now);
+            if (days === 0) { const h = Math.floor(m / 60); return h + (h === 1 ? ' hour ago' : ' hours ago'); }
+            if (days === 1) return 'Yesterday' + (opts.short ? '' : ' · ' + clock(d));
+            if (days < 7) return d.toLocaleDateString([], { weekday: 'long' }) + (opts.short ? '' : ' · ' + clock(d));
+            const date = ord(d.getDate()) + ' ' + d.toLocaleDateString([], { month: 'long' }) + (d.getFullYear() !== now.getFullYear() ? ' ' + d.getFullYear() : '');
+            return date + (opts.short ? '' : ' · ' + clock(d));
+        }
+        function dayLabel(ts) {
+            const d = new Date(ts), now = new Date(), days = daysBetween(d, now);
+            if (days === 0) return 'Today'; if (days === 1) return 'Yesterday';
+            if (days < 7) return d.toLocaleDateString([], { weekday: 'long' });
+            return ord(d.getDate()) + ' ' + d.toLocaleDateString([], { month: 'long' }) + (d.getFullYear() !== now.getFullYear() ? ' ' + d.getFullYear() : '');
+        }
+        function wrapRenderThread() {
+            const orig = window.apexCommunityRenderThread;
+            if (typeof orig !== 'function' || orig.__v2) return;
+            window.apexCommunityRenderThread = function () {
+                const r = orig.apply(this, arguments);
+                try {
+                    const area = $('commMessageArea'); const msgs = safe(() => _apexCommMessages[_apexCommActiveChat], null) || [];
+                    if (!area || !msgs.length || area.children.length !== msgs.length) return r;
+                    const rows = Array.from(area.children); let lastDay = null;
+                    rows.forEach((row, i) => {
+                        const m = msgs[i]; if (!m || !m.createdAt) return;
+                        const k = dayKey(new Date(m.createdAt));
+                        if (k !== lastDay) { const div = document.createElement('div'); div.className = 'v2-day-divider'; div.textContent = dayLabel(m.createdAt); area.insertBefore(div, row); lastDay = k; }
+                        const col = row.firstElementChild; if (!col) return;
+                        const t = document.createElement('div'); t.className = 'v2-msg-time'; t.title = new Date(m.createdAt).toLocaleString();
+                        t.textContent = fmtWhen(m.createdAt);
+                        const actions = col.lastElementChild;
+                        if (actions && actions.querySelector('button')) col.insertBefore(t, actions); else col.appendChild(t);
+                    });
+                    area.scrollTop = area.scrollHeight;
+                } catch (e) { console.warn('[v2] timestamps', e); }
+                return r;
+            };
+            window.apexCommunityRenderThread.__v2 = true;
+        }
+        // Chat list "last message" labels use the same language, in short form.
+        function wrapTimeAgo() {
+            if (typeof window.apexCommTimeAgo !== 'function' || window.apexCommTimeAgo.__v2) return;
+            window.apexCommTimeAgo = function (ts) { return ts ? fmtWhen(ts, { short: true }).replace(' minutes ago', ' min ago').replace(' minute ago', ' min ago').replace(' hours ago', ' hr ago').replace(' hour ago', ' hr ago') : ''; };
+            window.apexCommTimeAgo.__v2 = true;
+        }
+
+        function init() {
+            wrapPlusPick(); wrapRenderThread(); wrapTimeAgo();
+            window.apexCommunityOpenAddMemberSearch = openInvitePicker;
+            // Keep relative times fresh while a thread is open (the app already re-renders on its 8s poll,
+            // but a quiet thread would otherwise show "just now" forever).
+            setInterval(() => { const a = $('commMessageArea'); if (a && a.offsetParent && typeof apexCommunityRenderThread === 'function' && _apexCommActiveChat) { const inEdit = a.querySelector('input'); if (!inEdit) apexCommunityRenderThread(); } }, 60000);
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+        window.apexV2Community = { loadUsers, matchUsers, fmtWhen, dayLabel, openInvitePicker, attachSuggest };
+    })();
+    </script>
+
+    <!-- /V2:JS -->
 
 </body>
 </html>

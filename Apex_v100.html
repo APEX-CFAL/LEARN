@@ -7775,24 +7775,12 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             <!-- Account sign-in — nickname entry for returning students. Deliberately outside
                  the numbered step1..step9 flow so it never needs renumbering. -->
             <div class="step" id="stepAccount">
-                <div id="stepAccountNickPanel">
-                    <h1 style="font-size:32px;">Welcome back</h1>
-                    <p class="subtitle">Enter your nickname to continue.</p>
-                    <input type="text" id="accountNicknameInput" class="owg-account-input" placeholder="Your nickname" maxlength="24" autocomplete="username" onkeydown="if(event.key==='Enter')apexAccountNicknameNext()">
-                    <div id="accountNicknameNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
-                    <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
-                        <button class="ds-btn ds-btn-primary ds-btn-lg" onclick="apexAccountNicknameNext()">Next</button>
-                        <button class="owg-back-link" onclick="hideAccountScreen()">← Back</button>
-                    </div>
-                </div>
-                <div id="stepAccountGooglePanel" style="display:none;">
-                    <h1 style="font-size:32px;">Hi, <span id="accountNicknameConfirm"></span></h1>
-                    <p class="subtitle">Sign in with Google to pick up where you left off.</p>
-                    <div id="accountGoogleNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
-                    <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
-                        <div id="googleSignInBtnAccount" style="min-height:44px;"></div>
-                        <button class="owg-back-link" onclick="apexAccountBackToNickname()">← Back</button>
-                    </div>
+                <h1 style="font-size:32px;" id="stepAccountHeading">Welcome back</h1>
+                <p class="subtitle" id="stepAccountSubtitle">Sign in with Google to pick up where you left off.</p>
+                <div id="accountGoogleNotice" style="min-height:20px;font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;"></div>
+                <div class="btn-group" style="flex-direction:column;align-items:center;gap:8px;">
+                    <div id="googleSignInBtnAccount" style="min-height:44px;"></div>
+                    <button class="owg-back-link" onclick="hideAccountScreen()">← Back</button>
                 </div>
             </div>
 
@@ -13524,9 +13512,11 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         }
 
         // ── v65: sign-in (existing account) + nickname-claim (new account) screens ──────
-        // v107: each is two sub-panels — pick/enter the nickname first, THEN (a separate page,
-        // not a field alongside a password) sign in with Google, which self-continues into the
-        // app the moment Google hands back a credential. No manual "Continue" click after that.
+        // v108: returning sign-in no longer asks for a nickname at all — straight to Google,
+        // which looks the account up by the signed-in Google account itself (apex/googleIndex/,
+        // written by apexClaimNickname()), then flashes "Welcome back, <nickname>!" before
+        // self-continuing into the app. New-account creation (below) still asks for a nickname
+        // first — it's being chosen, not looked up.
         function showAccountScreen() {
             const s1 = document.getElementById('step1');
             const acc = document.getElementById('stepAccount');
@@ -13534,9 +13524,12 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             if (acc) acc.classList.add('active');
             const bar = document.querySelector('#onboardingPage .progress-bar');
             if (bar) bar.style.display = 'none';
-            apexAccountBackToNickname();
-            const input = document.getElementById('accountNicknameInput');
-            if (input) setTimeout(() => input.focus(), 50);
+            const heading = document.getElementById('stepAccountHeading');
+            if (heading) heading.textContent = 'Welcome back';
+            const subtitle = document.getElementById('stepAccountSubtitle');
+            if (subtitle) subtitle.textContent = 'Sign in with Google to pick up where you left off.';
+            const notice = document.getElementById('accountGoogleNotice');
+            if (notice) notice.textContent = '';
             _gsiIntent = 'signin';
             gsiRenderButtons();
         }
@@ -13547,38 +13540,6 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             if (s1) s1.classList.add('active');
             const bar = document.querySelector('#onboardingPage .progress-bar');
             if (bar) bar.style.display = '';
-            const notice = document.getElementById('accountNicknameNotice');
-            if (notice) notice.textContent = '';
-        }
-        // Nickname panel -> validates the nickname actually exists, THEN reveals the Google
-        // sign-in panel (catches a typo'd/unknown nickname before sending them through Google).
-        async function apexAccountNicknameNext() {
-            const input = document.getElementById('accountNicknameInput');
-            const notice = document.getElementById('accountNicknameNotice');
-            const raw = input ? input.value.trim() : '';
-            const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
-            if (!key) { if (notice) notice.textContent = 'Enter a nickname first.'; return; }
-            if (notice) notice.textContent = 'Checking…';
-            try {
-                const meta = await apexFb.get('apex/users/' + key + '/meta');
-                if (!meta) { if (notice) notice.textContent = 'No account with that nickname — tap Get Started to create one.'; return; }
-                if (notice) notice.textContent = '';
-                const confirmEl = document.getElementById('accountNicknameConfirm');
-                if (confirmEl) confirmEl.textContent = raw;
-                document.getElementById('stepAccountNickPanel').style.display = 'none';
-                document.getElementById('stepAccountGooglePanel').style.display = '';
-                _gsiIntent = 'signin';
-                gsiRenderButtons();
-            } catch (e) {
-                console.warn('[apexAccountNicknameNext]', e);
-                if (notice) notice.textContent = 'Could not reach the server — check your connection and try again.';
-            }
-        }
-        function apexAccountBackToNickname() {
-            const nick = document.getElementById('stepAccountNickPanel');
-            const goog = document.getElementById('stepAccountGooglePanel');
-            if (goog) goog.style.display = 'none';
-            if (nick) nick.style.display = '';
             const notice = document.getElementById('accountGoogleNotice');
             if (notice) notice.textContent = '';
         }
@@ -13762,6 +13723,13 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             } catch (e) { return null; }
         }
 
+        // Firebase RTDB keys can't contain '.', '#', '$', '[', ']', '/' — an email needs all of
+        // those swapped out to be usable as one. Only used to look itself back up (never shown,
+        // never needs to be reversed), so any consistent, collision-free substitution works.
+        function gsiEmailKey(email) {
+            return String(email).toLowerCase().replace(/\./g, ',').replace(/[#$\[\]/]/g, '_');
+        }
+
         function gsiRenderButtons() {
             const clientId = gcalGetClientId();
             if (!clientId) return;
@@ -13811,6 +13779,9 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                 const wonRace = await apexFb.get('apex/users/' + key + '/meta/primaryDeviceId');
                 if (wonRace !== deviceId) { if (notice) notice.textContent = 'That nickname was just taken — try another.'; return; }
 
+                // Reverse lookup for returning sign-in, which no longer asks for a nickname —
+                // it goes straight to Google and finds the account by this instead.
+                await apexFb.set('apex/googleIndex/' + gsiEmailKey(profile.email), key);
                 await apexFb.set('apex/users/' + key + '/devices/' + deviceId, { addedAt: now, lastSeenAt: now, label: 'origin' });
                 // A different account was already signed in on this device — wipe its leftover
                 // data before this brand-new one starts, or the two blend together (see
@@ -13842,26 +13813,27 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         // signed in simultaneously now fighting over which one generates — acceptable since that's
         // an unusual case and the user asked for the choice to go away entirely.
         async function apexTryNicknameSignIn() {
-            const input = document.getElementById('accountNicknameInput');
             const notice = document.getElementById('accountGoogleNotice');
-            const raw = input ? input.value.trim() : '';
-            const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
-            if (!key) { if (notice) notice.textContent = 'Enter a nickname first.'; return; }
             if (!_gsiAccountProfile) { if (notice) notice.textContent = 'Tap "Sign in with Google" above to continue.'; return; }
             const profile = _gsiAccountProfile;
 
             if (notice) notice.textContent = 'Signing in…';
             try {
-                const meta = await apexFb.get('apex/users/' + key + '/meta');
-                if (!meta) { if (notice) notice.textContent = 'No account with that nickname — tap Get Started to create one.'; return; }
+                // No nickname was entered — find it from the Google account that just signed in
+                // (apex/googleIndex/, written by apexClaimNickname()).
+                const key = await apexFb.get('apex/googleIndex/' + gsiEmailKey(profile.email));
+                if (!key) { if (notice) notice.textContent = "We couldn't find an Apex account for that Google account — tap Get Started to create one."; return; }
 
-                // Accounts made before Google Sign-In existed have no googleEmail on file yet —
-                // bind this Google account to it on first sign-in instead of locking them out.
-                // Once set, it's the only thing that can ever sign into this nickname again.
-                if (meta.googleEmail && meta.googleEmail.toLowerCase() !== profile.email.toLowerCase()) {
-                    if (notice) notice.textContent = 'This nickname is linked to a different Google account.';
-                    return;
-                }
+                const meta = await apexFb.get('apex/users/' + key + '/meta');
+                if (!meta) { if (notice) notice.textContent = "That account couldn't be found — tap Get Started to create one."; return; }
+
+                // A quick, visible confirmation before the screen changes out from under them.
+                if (notice) notice.textContent = '';
+                const heading = document.getElementById('stepAccountHeading');
+                if (heading) heading.textContent = 'Welcome back, ' + key + '!';
+                const subtitle = document.getElementById('stepAccountSubtitle');
+                if (subtitle) subtitle.textContent = "Let's pick up where you left off.";
+                await new Promise(r => setTimeout(r, 700));
 
                 const myDeviceId = apexDeviceId();
                 const now = Date.now();
@@ -13875,10 +13847,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                 if (prevKey && prevKey !== key) apexClearLocalUserState();
                 localStorage.setItem('apexNickname', key);
                 localStorage.setItem('apexPrimaryDeviceId', myDeviceId);
-                const metaPatch = {};
-                if (meta.primaryDeviceId !== myDeviceId) metaPatch.primaryDeviceId = myDeviceId;
-                if (!meta.googleEmail) { metaPatch.googleEmail = profile.email; metaPatch.googleName = profile.name || ''; }
-                if (Object.keys(metaPatch).length) await apexFb.patch('apex/users/' + key + '/meta', metaPatch);
+                if (meta.primaryDeviceId !== myDeviceId) await apexFb.patch('apex/users/' + key + '/meta', { primaryDeviceId: myDeviceId });
                 _gsiAccountProfile = null;
                 await apexHydrateFromCloud();
                 showHomePage();

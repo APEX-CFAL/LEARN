@@ -10151,7 +10151,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                         <div style="font-weight:900;font-size:16px;color:var(--text-primary);">Join a Community</div>
                         <button onclick="apexCommunityToggleJoinOverlay()" style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;">×</button>
                     </div>
-                    <input id="commJoinSearchInput" placeholder="Search communities..." oninput="apexCommunityRenderJoinResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13.5px;color:var(--text-primary);background:var(--bg-secondary);outline:none;margin-bottom:12px;">
+                    <input id="commJoinSearchInput" placeholder="Type a community name…" autocomplete="off" oninput="apexCommunityRenderJoinResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13.5px;color:var(--text-primary);background:var(--bg-secondary);outline:none;margin-bottom:12px;">
                     <div id="commJoinResults" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
                     <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Communities you've left</div>
                     <div id="commLeftBaseList" style="display:flex;flex-direction:column;gap:8px;"></div>
@@ -27524,6 +27524,9 @@ Return ONLY JSON:
         let _apexCommTypingLastSent = 0;
         let _apexCommReactionPickerFor = null; // msgId whose "+" reaction popover is open, or null
         let _apexCommEditingId = null;         // msgId currently in inline-edit mode, or null
+        let _apexCommStickToBottom = true;     // set by RenderThread: follow new messages only when the reader is already at the bottom
+        let _apexCommForceScroll = false;      // one-shot: next render scrolls to the bottom regardless (own send, chat just opened)
+        let _apexCommRenderedChat = null;      // chat id the message area currently shows
         let _apexCommDmIndexed = new Set();    // dm ids already written to the discoverability index this session
         let _apexCommRawGroups = {};           // last-fetched raw apex/community/groups tree (incl. chats we're not a member of) — used by Join search
         let _apexCommNewChatIntent = 'community'; // 'community' | 'group' — which kind the shared #commNewChatRow submits as
@@ -27803,6 +27806,7 @@ Return ONLY JSON:
             apexCommMarkRead(id);
             document.getElementById('commListView').style.display = 'none';
             document.getElementById('commThreadView').style.display = 'block';
+            _apexCommForceScroll = true;
             apexCommunityRenderThread();
             apexCommunityStopThreadPolling();
             _apexCommThreadPollTimer = setInterval(async () => {
@@ -27945,6 +27949,16 @@ Return ONLY JSON:
             if (hostBtn) hostBtn.style.display = (meta.owner && meta.owner === me) ? 'block' : 'none';
 
             const area = document.getElementById('commMessageArea');
+            // The thread re-renders every few seconds (polls, reactions, typing). Someone who has
+            // scrolled up to read older messages must stay exactly where they are — only follow new
+            // messages when the reader is already at (or near) the bottom, has just opened the chat,
+            // or has just sent something themselves.
+            const chatChanged = _apexCommRenderedChat !== id;
+            _apexCommRenderedChat = id;
+            const prevScrollTop = area.scrollTop;
+            const nearBottom = (area.scrollHeight - area.scrollTop - area.clientHeight) < 48;
+            _apexCommStickToBottom = chatChanged || nearBottom || _apexCommForceScroll;
+            _apexCommForceScroll = false;
             let lastSender = null;
             area.innerHTML = msgs.map(m => {
                 const mine = m.sender === me;
@@ -28025,7 +28039,7 @@ Return ONLY JSON:
                     </div>
                 </div>`;
             }).join('') || '<div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:20px;">No messages yet — say hi!</div>';
-            area.scrollTop = area.scrollHeight;
+            area.scrollTop = _apexCommStickToBottom ? area.scrollHeight : prevScrollTop;
 
             const typingLine = document.getElementById('commTypingLine');
             if (typingLine) {
@@ -28122,6 +28136,7 @@ Return ONLY JSON:
             _apexCommMessages[id].push({ id: msgId, ...msg });
             input.value = '';
             apexCommunityClearDraftType();
+            _apexCommForceScroll = true;
             apexCommunityRenderThread();
             try { await apexFb.patch(`${apexCommPathFor(id)}/messages`, { [msgId]: msg }); }
             catch (e) { console.warn('[apexCommunitySend]', e); fxToast('⚠️ Could not send — check your connection'); }
@@ -28237,6 +28252,7 @@ Return ONLY JSON:
             const msg = { sender: apexCommunityUserKey(), type: 'msg', votes: 0, text: '', image: dataUrl, createdAt: Date.now() };
             if (!_apexCommMessages[id]) _apexCommMessages[id] = [];
             _apexCommMessages[id].push({ id: msgId, ...msg });
+            _apexCommForceScroll = true;
             apexCommunityRenderThread();
             try { await apexFb.patch(`${apexCommPathFor(id)}/messages`, { [msgId]: msg }); }
             catch (e) { console.warn('[apexCommunitySendPhoto]', e); fxToast('⚠️ Could not send photo — check your connection'); }
@@ -28325,25 +28341,77 @@ Return ONLY JSON:
                 apexCommunityRenderJoinResults();
             }
         }
+        // Ranked name matching for the Join search — the same feel as the student picker: exact
+        // match first, then names starting with what was typed, then a word starting with it, then
+        // names containing it, then near-misses (a typo or two, or the letters typed in order).
+        function apexCommEditDistance(a, b) {
+            if (a === b) return 0;
+            if (!a.length) return b.length;
+            if (!b.length) return a.length;
+            let prev = Array.from({ length: b.length + 1 }, (_, k) => k);
+            for (let x = 1; x <= a.length; x++) {
+                const cur = [x];
+                for (let y = 1; y <= b.length; y++) {
+                    cur[y] = Math.min(prev[y] + 1, cur[y - 1] + 1, prev[y - 1] + (a[x - 1] === b[y - 1] ? 0 : 1));
+                }
+                prev = cur;
+            }
+            return prev[b.length];
+        }
+        function apexCommNameMatchRank(name, q) {
+            const n = String(name || '').toLowerCase().trim();
+            if (!q) return 0;
+            if (n === q) return 0;
+            if (n.startsWith(q)) return 1;
+            const words = n.split(/[\s\-_./()]+/).filter(Boolean);
+            if (words.some(w => w.startsWith(q))) return 2;
+            if (n.includes(q)) return 3;
+            const tol = q.length <= 3 ? 0 : q.length <= 5 ? 1 : 2;
+            if (tol) {
+                const close = (w) => apexCommEditDistance(w, q) <= tol || (w.length > q.length && apexCommEditDistance(w.slice(0, q.length), q) <= tol);
+                if (close(n) || words.some(close)) return 4;
+            }
+            if (q.length >= 3) { // letters typed in order: "phy12" → "Physics 12"
+                let k = 0; for (const c of n) { if (c === q[k]) k++; if (k === q.length) break; }
+                if (k === q.length) return 5;
+            }
+            return -1;
+        }
+        function apexCommHighlightName(name, q) {
+            const safeName = String(name || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            if (!q) return safeName;
+            const i = String(name || '').toLowerCase().indexOf(q);
+            if (i < 0) return safeName;
+            const esc = (t) => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            return esc(name.slice(0, i)) + '<b>' + esc(name.slice(i, i + q.length)) + '</b>' + esc(name.slice(i + q.length));
+        }
         function apexCommunityRenderJoinResults() {
             const me = apexCommunityUserKey();
             const q = (document.getElementById('commJoinSearchInput')?.value || '').toLowerCase().trim();
-            const results = Object.entries(_apexCommRawGroups || {}).filter(([id, node]) => {
+            const results = Object.entries(_apexCommRawGroups || {}).map(([id, node]) => {
                 const m = node.meta || {};
                 const isLegacy = !m.type;
-                if (isLegacy) return false; // already visible to everyone, nothing to "join"
-                if (m.type !== 'community') return false; // groups are invite-only — never searchable
+                if (isLegacy) return null; // already visible to everyone, nothing to "join"
+                if (m.type !== 'community') return null; // groups are invite-only — never searchable
                 const members = node.members || {};
-                if (members[me]) return false; // already joined
+                if (members[me]) return null; // already joined
                 const name = m.name || id;
-                return !q || name.toLowerCase().includes(q);
-            }).map(([id, node]) => ({ id, name: (node.meta && node.meta.name) || id }));
+                const rank = apexCommNameMatchRank(name, q);
+                if (rank < 0) return null;
+                return { id, name, rank, color: m.color || apexCommColorForUser(name), members: Object.keys(members).length };
+            }).filter(Boolean)
+              .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name))
+              .slice(0, 12);
             const resultsEl = document.getElementById('commJoinResults');
             resultsEl.innerHTML = results.length ? results.map(r => `
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;">
-                    <span style="font-weight:700;font-size:13.5px;color:var(--text-primary);">${r.name}</span>
-                    <button onclick="apexCommunityJoinCommunity('${r.id}')" style="background:var(--accent);color:var(--btn-text);border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Join</button>
-                </div>`).join('') : '<div style="text-align:center;color:var(--text-secondary);font-size:12.5px;padding:10px;">No open communities found.</div>';
+                <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1.5px solid var(--border);border-radius:12px;">
+                    ${apexCommAvatarHTML(r.color, String(r.name).trim()[0]?.toUpperCase() || '#', 30)}
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:13.5px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${apexCommHighlightName(r.name, q)}</div>
+                        <div style="font-size:11.5px;color:var(--text-secondary);font-weight:600;">${r.members} member${r.members === 1 ? '' : 's'}</div>
+                    </div>
+                    <button onclick="apexCommunityJoinCommunity('${r.id}')" style="background:var(--accent);color:var(--btn-text);border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;flex-shrink:0;">Join</button>
+                </div>`).join('') : `<div style="text-align:center;color:var(--text-secondary);font-size:12.5px;padding:10px;">${q ? 'No community called “' + q.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '”' : 'No open communities found.'}</div>`;
             const leftEl = document.getElementById('commLeftBaseList');
             const left = apexCommGetLeftBaseChats();
             const leftChats = COMM_BASE_CHATS.filter(c => left.includes(c.id));
@@ -34846,6 +34914,9 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
             const orig = window.apexCommunityRenderThread;
             if (typeof orig !== 'function' || orig.__v2) return;
             window.apexCommunityRenderThread = function () {
+                // Measure on the fully decorated DOM (dividers + times in place), so a reader who has
+                // scrolled up lands back on exactly the same spot once we've decorated the new DOM.
+                const scrollBefore = safe(() => $('commMessageArea').scrollTop, 0);
                 const r = orig.apply(this, arguments);
                 try {
                     const area = $('commMessageArea'); const msgs = safe(() => _apexCommMessages[_apexCommActiveChat], null) || [];
@@ -34861,7 +34932,7 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
                         const actions = col.lastElementChild;
                         if (actions && actions.querySelector('button')) col.insertBefore(t, actions); else col.appendChild(t);
                     });
-                    area.scrollTop = area.scrollHeight;
+                    area.scrollTop = (safe(() => _apexCommStickToBottom, true) !== false) ? area.scrollHeight : scrollBefore;
                 } catch (e) { console.warn('[v2] timestamps', e); }
                 return r;
             };

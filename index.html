@@ -2,10 +2,120 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=Apex_v100.html">
-<title>apexcfal.com</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apex — Study Workspace</title>
+<meta name="theme-color" content="#6A4CF5">
+<!-- Apex boot page. Tiny on purpose: it paints the Welcome screen instantly, then downloads
+     and caches the full app (Apex_v100.html + its modules) in the background while the student
+     reads it. "Get Started" / "I have an account" open the real app on that exact screen — by
+     then it's normally already on the device; if not, the button turns into a progress bar.
+     A returning student (studentData present) never sees this page: straight into the app. -->
+<script>
+  // Returning student → the app itself (served from the device by sw.js). Runs before any paint.
+  try { if (localStorage.getItem('studentData')) { location.replace('./Apex_v100.html'); } } catch (e) {}
+  try { if (localStorage.getItem('darkMode') === 'true') document.documentElement.classList.add('dark'); } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  :root { --bg: #FBF6EC; --ink: #1B1530; --muted: #6E6787; --violet: #6A4CF5; --violet-deep: #5438D6; --card: #FFFFFF; --line: #E7DFD0; }
+  html.dark { --bg: #0F0C1E; --ink: #F6F3FF; --muted: #A9A3C4; --violet: #8B74FF; --violet-deep: #7A61F5; --card: #171331; --line: #2B2550; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: 'DM Sans', 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .wrap { width: 100%; max-width: 560px; text-align: center; position: relative; }
+  .glow { position: absolute; left: 50%; top: 55%; width: 320px; height: 320px; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(106,76,245,0.22) 0%, rgba(106,76,245,0) 70%); pointer-events: none; }
+  h1 { font-family: 'Outfit', 'DM Sans', sans-serif; font-size: clamp(48px, 10vw, 76px); font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 18px; position: relative; }
+  .sub { font-size: 16px; color: var(--muted); line-height: 1.5; max-width: 440px; margin: 0 auto 44px; position: relative; }
+  .btn { display: block; width: 100%; max-width: 260px; margin: 0 auto 14px; padding: 15px 28px; border-radius: 999px; font: 700 17px/1.2 inherit; cursor: pointer; border: 2px solid var(--ink); transition: transform .15s, box-shadow .15s; position: relative; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink) !important; }
+  .primary { background: var(--violet); color: #fff; box-shadow: 0 5px 0 var(--ink); }
+  .secondary { background: transparent; color: var(--ink); box-shadow: 0 5px 0 var(--ink); }
+  #progress { display: none; max-width: 320px; margin: 8px auto 0; position: relative; }
+  #progress .label { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .track { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; border: 1.5px solid var(--ink); }
+  #bar { height: 100%; width: 0%; background: var(--violet); border-radius: 999px; transition: width .25s; }
+  #pct { font-size: 12.5px; color: var(--muted); margin-top: 8px; font-weight: 600; }
+  .note { font-size: 11.5px; color: var(--muted); margin-top: 30px; position: relative; }
+  @media (prefers-reduced-motion: reduce) { .btn, #bar { transition: none; } }
+</style>
+<noscript><meta http-equiv="refresh" content="0; url=Apex_v100.html"></noscript>
 </head>
 <body>
-<p>Redirecting to <a href="Apex_v100.html">Apex</a>...</p>
+  <div class="wrap" id="apexBoot">
+    <div class="glow"></div>
+    <h1>Welcome</h1>
+    <p class="sub">An app built to reach your goals while studying what matters and helping you do your best.</p>
+    <div id="actions">
+      <button class="btn primary" type="button" onclick="apexBootGo('signup')">Get Started</button>
+      <button class="btn secondary" type="button" onclick="apexBootGo('signin')">I have an account</button>
+    </div>
+    <div id="progress">
+      <div class="label">Preparing Apex…</div>
+      <div class="track"><div id="bar"></div></div>
+      <div id="pct">0%</div>
+    </div>
+    <div class="note" id="note">Setting things up in the background — this only happens once.</div>
+  </div>
+  <script>
+  (function () {
+    var APP = './Apex_v100.html';
+    var state = { done: false, pct: 0, failed: false, target: null };
+    window.__apexBoot = state;
+    var $ = function (id) { return document.getElementById(id); };
+    function setPct(p) { state.pct = p; $('bar').style.width = p + '%'; $('pct').textContent = p + '%'; }
+
+    // Register the worker first so the warm-up download below lands in its cache too; wait
+    // (briefly) until it controls this page, but never let that gate the download for long.
+    async function withServiceWorker() {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        await navigator.serviceWorker.register('./sw.js');
+        await Promise.race([navigator.serviceWorker.ready, new Promise(function (r) { setTimeout(r, 1500); })]);
+        if (!navigator.serviceWorker.controller) {
+          await new Promise(function (r) {
+            var t = setTimeout(r, 1500);
+            navigator.serviceWorker.addEventListener('controllerchange', function () { clearTimeout(t); r(); }, { once: true });
+          });
+        }
+      } catch (e) { /* no worker: the plain fetch below still warms the browser's HTTP cache */ }
+    }
+
+    async function warmUp() {
+      await withServiceWorker();
+      try {
+        var res = await fetch(APP);
+        // Over gzip the Content-Length is the compressed size, so fall back to the known
+        // uncompressed size for the percentage; it's a progress hint, not a contract.
+        var expected = (!res.headers.get('content-encoding') && +res.headers.get('content-length')) || 2600000;
+        var reader = res.body && res.body.getReader ? res.body.getReader() : null;
+        if (reader) {
+          var got = 0;
+          for (;;) { var r = await reader.read(); if (r.done) break; got += r.value.length; setPct(Math.min(99, Math.round(got / expected * 100))); }
+        } else { await res.arrayBuffer(); }
+        // The AI module graph (21 small files) — warm those too.
+        try { await import('./Apex-Repo/ai-logic/index.js'); } catch (e) {}
+      } catch (e) { state.failed = true; }
+      state.done = true; setPct(100);
+      $('note').textContent = 'Ready.';
+      if (state.target) go(state.target);
+    }
+
+    // Hand the chosen screen to the app via sessionStorage (same tab only) rather than a query
+    // string, so the navigation URL stays identical to the one just warmed — a cache hit even
+    // in a browser without service workers.
+    function go(target) { try { sessionStorage.setItem('apexStart', target); } catch (e) {} location.href = APP; }
+    window.apexBootGo = function (target) {
+      if (state.done) { go(target); return; }
+      state.target = target;
+      $('actions').style.display = 'none';
+      $('progress').style.display = 'block';
+      setTimeout(function () { if (!state.done) go(target); }, 25000); // never trap anyone here
+    };
+
+    warmUp();
+  })();
+  </script>
 </body>
 </html>

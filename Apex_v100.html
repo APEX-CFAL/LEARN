@@ -9688,8 +9688,11 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                             <button class="rl-pill" onclick="selectWorkload(this,'heavy')" data-load="heavy">Heavy</button>
                         </div>
 
-                        <div class="rl-eyebrow">Journal</div>
-                        <div style="position:relative;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                            <div class="rl-eyebrow" style="margin-bottom:0;">Journal</div>
+                            <button id="journalLockBtn" class="rl-btn-secondary" style="padding:5px 12px;font-size:12px;" onclick="apexJournalLockBtn()">🔒 Set a PIN</button>
+                        </div>
+                        <div style="position:relative;margin-top:8px;">
                             <textarea id="logJournalText" class="rl-textarea" placeholder="What went well today? What was hard?" style="padding-right:56px;"></textarea>
                             <div class="avwave-strip" id="dailyLogWaveStrip"></div>
                             <button id="voiceBtn" class="voice-circle-btn" onclick="toggleVoice()" title="Voice input" style="position:absolute;right:10px;bottom:10px;">
@@ -9698,7 +9701,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                                 <svg class="voice-icon-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
                             </button>
                         </div>
-                        <div id="thoughtsBlock" style="font-size:11.5px;color:#B8A8D8;margin-top:6px;">Private — not shared with the AI.</div>
+                        <div id="thoughtsBlock" style="font-size:11.5px;color:#B8A8D8;margin-top:6px;">Private — encrypted with your journal PIN, never shared with the AI.</div>
                         <div id="voiceStatus" style="font-size:12.5px;color:#6B17E0;margin-top:4px;display:none;font-weight:700;">Listening... speak now</div>
 
                         <div style="display:flex;align-items:center;gap:14px;margin-top:18px;">
@@ -9960,6 +9963,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                                 <button onclick="apexCommunityAskQuestion()" style="text-align:left;background:none;border:none;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:700;color:var(--text-primary);cursor:pointer;font-family:inherit;">❓ Ask a Question</button>
                                 <button onclick="apexCommunityOpenMcqFromMenu()" style="text-align:left;background:none;border:none;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:700;color:var(--text-primary);cursor:pointer;font-family:inherit;">📊 MCQ / Poll</button>
                                 <button onclick="apexCommunityShareTip()" style="text-align:left;background:none;border:none;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:700;color:var(--text-primary);cursor:pointer;font-family:inherit;">💡 Share a Tip</button>
+                                <button id="commPlusAddPeople" onclick="apexCommunityAddPeopleFromPlus()" style="display:none;text-align:left;background:none;border:none;border-top:1.5px solid var(--border);margin-top:4px;padding:11px 10px 9px;border-radius:0 0 8px 8px;font-size:13px;font-weight:700;color:var(--text-primary);cursor:pointer;font-family:inherit;">👥 Add People to Group</button>
                             </div>
                             <div id="commHostMenu" style="display:none;flex-direction:column;gap:4px;position:absolute;top:56px;right:50px;background:var(--bg-primary);border:1.5px solid var(--border);border-radius:14px;padding:8px;z-index:60;box-shadow:0 6px 24px rgba(0,0,0,.18);min-width:200px;"></div>
                         </div>
@@ -10079,6 +10083,21 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                             <button id="gcalRefreshBtn" class="rl-btn-secondary" style="display:none;" onclick="gcalSyncWeek()">↺ Refresh now</button>
                             <span id="gcalStatus" style="font-size:12.5px;font-weight:700;color:var(--text-secondary);"></span>
                         </div>
+                    </div>
+
+                    <div class="rl-card">
+                        <div class="rl-eyebrow" style="margin-bottom:4px;">Account</div>
+                        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Signed in as <strong id="settingsAccountName" style="color:var(--text-primary);"></strong>.</div>
+                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                            <button class="rl-btn-secondary" onclick="apexLogOut()">Log out</button>
+                            <button class="rl-btn-secondary" id="settingsDeleteBtn" style="color:var(--c-danger);border-color:var(--c-danger);" onclick="apexRequestAccountDeletion()">Delete account</button>
+                        </div>
+                        <div id="settingsDeletePending" style="display:none;margin-top:14px;padding:12px 14px;border:1.5px solid var(--c-danger);border-radius:12px;background:var(--accent-wash);">
+                            <div style="font-size:13px;font-weight:700;color:var(--c-danger);">Account deletion scheduled</div>
+                            <div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;">Everything will be permanently deleted in <strong id="settingsDeleteCountdown" style="color:var(--text-primary);">5:00</strong>. Changed your mind?</div>
+                            <button class="rl-btn-secondary" style="margin-top:10px;" onclick="apexCancelAccountDeletion()">Cancel deletion</button>
+                        </div>
+                        <div style="font-size:11.5px;color:var(--text-secondary);margin-top:10px;">Log out keeps your data on your account. Delete removes your account and all its data on every device — with a 5-minute delay during which you can cancel.</div>
                     </div>
                 </div>
             </div>
@@ -13060,7 +13079,8 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         // UI-preference bookkeeping that has no business being "shared" across devices at all.
         const APEX_SYNC_EXCLUDE = new Set([
             'groqApiKey', 'groqApiKey2', 'geminiApiKey', 'lastKeyUsed',
-            'apexNickname', 'apexDeviceId', 'apexStudentId', 'apexPrimaryDeviceId', 'apexSyncMeta'
+            'apexNickname', 'apexDeviceId', 'apexStudentId', 'apexPrimaryDeviceId', 'apexSyncMeta',
+            'apexDeleteAccountAt'
         ]);
         let apexApplyingRemote = false; // guard so pulled-down values don't immediately bounce back up
 
@@ -13087,6 +13107,103 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             });
             localStorage.clear();
             Object.keys(preserve).forEach(k => localStorage.setItem(k, preserve[k]));
+        }
+
+        // ── Account lifecycle (Settings → Account): log out, and delete with a 5-minute
+        // cancel window. The scheduled time lives in localStorage (apexDeleteAccountAt,
+        // excluded from Firebase sync so a second device never acts on it), so closing the app
+        // doesn't skip the wait: on the next open, an elapsed timer deletes immediately and a
+        // still-running one resumes its countdown. ──
+        const APEX_DELETE_DELAY_MS = 5 * 60 * 1000;
+        let _apexDeleteTicker = null;
+
+        function apexGoogleSignOutQuietly() {
+            try { if (typeof gcalDisconnect === 'function' && typeof gcalIsConnected === 'function' && gcalIsConnected()) gcalDisconnect(); } catch (e) { /* noop */ }
+            try { if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch (e) { /* noop */ }
+        }
+        function apexLogOut() {
+            if (!confirm('Log out of this device? Your data stays saved to your account — sign in with Google to pick it back up.')) return;
+            apexCancelAccountDeletion(true);
+            apexGoogleSignOutQuietly();
+            apexClearLocalUserState();
+            location.reload();
+        }
+        function apexDeleteScheduledAt() {
+            const v = parseInt(localStorage.getItem('apexDeleteAccountAt') || '0', 10);
+            return v > 0 ? v : 0;
+        }
+        function apexRequestAccountDeletion() {
+            const key = apexUserKey();
+            if (!key) { if (typeof fxToast === 'function') fxToast('No account is signed in on this device'); return; }
+            if (!confirm('Delete your account "' + key + '" and ALL its data on every device?\n\nFor safety this waits 5 minutes before it actually happens — you can cancel from Settings during that time.')) return;
+            localStorage.setItem('apexDeleteAccountAt', String(Date.now() + APEX_DELETE_DELAY_MS));
+            apexStartDeleteTicker();
+            apexRenderDeleteState();
+            if (typeof fxToast === 'function') fxToast('Account deletion scheduled — 5 minutes to cancel');
+        }
+        function apexCancelAccountDeletion(silent) {
+            const had = !!apexDeleteScheduledAt();
+            localStorage.removeItem('apexDeleteAccountAt');
+            if (_apexDeleteTicker) { clearInterval(_apexDeleteTicker); _apexDeleteTicker = null; }
+            apexRenderDeleteState();
+            if (had && !silent && typeof fxToast === 'function') fxToast('Account deletion cancelled');
+        }
+        function apexStartDeleteTicker() {
+            if (_apexDeleteTicker) return;
+            _apexDeleteTicker = setInterval(() => {
+                const at = apexDeleteScheduledAt();
+                if (!at) { clearInterval(_apexDeleteTicker); _apexDeleteTicker = null; apexRenderDeleteState(); return; }
+                if (Date.now() >= at) { clearInterval(_apexDeleteTicker); _apexDeleteTicker = null; apexExecuteAccountDeletion(); return; }
+                apexRenderDeleteState();
+            }, 1000);
+        }
+        // Boot + Settings-open hook: resume a countdown, or finish one that elapsed while closed.
+        function apexCheckPendingDeletion() {
+            const at = apexDeleteScheduledAt();
+            if (!at) return;
+            if (Date.now() >= at) { apexExecuteAccountDeletion(); return; }
+            apexStartDeleteTicker();
+        }
+        function apexRenderDeleteState() {
+            const pending = document.getElementById('settingsDeletePending');
+            const btn = document.getElementById('settingsDeleteBtn');
+            const cd = document.getElementById('settingsDeleteCountdown');
+            if (!pending) return;
+            const at = apexDeleteScheduledAt();
+            pending.style.display = at ? '' : 'none';
+            if (btn) btn.style.display = at ? 'none' : '';
+            if (at && cd) {
+                const left = Math.max(0, Math.ceil((at - Date.now()) / 1000));
+                cd.textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+            }
+        }
+        let _apexDeleting = false;
+        async function apexExecuteAccountDeletion() {
+            if (_apexDeleting) return;
+            _apexDeleting = true;
+            const key = apexUserKey();
+            try {
+                if (key) {
+                    // The Google-email reverse index is what returning sign-in uses to find this
+                    // nickname — drop it too, or the deleted account would still look "found".
+                    const meta = await apexFb.get('apex/users/' + key + '/meta');
+                    if (meta && meta.googleEmail && typeof gsiEmailKey === 'function') await apexFb.del('apex/googleIndex/' + gsiEmailKey(meta.googleEmail));
+                    const ok = await apexFb.del('apex/users/' + key);
+                    if (!ok) throw new Error('delete failed');
+                }
+                localStorage.removeItem('apexDeleteAccountAt');
+                apexGoogleSignOutQuietly();
+                apexClearLocalUserState();
+                alert('Your account has been deleted.');
+                location.reload();
+            } catch (e) {
+                console.warn('[apexExecuteAccountDeletion]', e);
+                _apexDeleting = false;
+                // Don't retry on every tick against a dead connection — drop the schedule and say so.
+                localStorage.removeItem('apexDeleteAccountAt');
+                apexRenderDeleteState();
+                alert("Couldn't reach the server to delete your account. Check your connection and try again from Settings.");
+            }
         }
 
         (function apexInstallSyncWrap() {
@@ -19128,6 +19245,10 @@ ${(s.chapters && s.chapters.length)
             const gcalIdEl = document.getElementById('gcalClientIdInput');
             if (gcalIdEl) gcalIdEl.value = gcalGetClientId();
             if (typeof gcalRenderSettingsPanel === 'function') gcalRenderSettingsPanel();
+            const acctEl = document.getElementById('settingsAccountName');
+            if (acctEl) acctEl.textContent = apexUserKey() || '—';
+            apexCheckPendingDeletion();
+            apexRenderDeleteState();
         }
 
         function apexSaveSettingsProfile() {
@@ -19942,7 +20063,183 @@ ${(s.chapters && s.chapters.length)
             if (waveStrip) apexVoiceWaveStart(waveStrip);
         }
 
-        function saveDailyLog() {
+        // ═══ Journal encryption ═══
+        // The journal is the one thing in the app that is the student's alone: it's never put in
+        // an AI prompt (every prompt builder reads mood/workload/aiMessage only — aiMessage is the
+        // separate "message to the AI" box), and from here on it is never stored in plaintext
+        // either. Each entry is AES-GCM encrypted (dailyLogs[].journalEnc = {iv, ct}) with a key
+        // derived (PBKDF2, 200k rounds) from a journal PIN the student sets; the PIN is never
+        // stored. trackingData still syncs to Firebase as usual, but what lands there is
+        // ciphertext. The derived key lives in memory, cached for this tab only (sessionStorage
+        // — not localStorage, so it's never mirrored to Firebase), so a reload doesn't re-ask.
+        // Forgotten PIN = entries are unrecoverable, by design; "Reset" wipes them.
+        const APEX_JOURNAL_CHECK = 'apex-journal-ok';
+        let _apexJournalKey = null;
+        const _apexHex = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+        const _apexUnhex = h => new Uint8Array((String(h || '').match(/../g) || []).map(x => parseInt(x, 16)));
+        function apexJournalLock() { try { return JSON.parse(localStorage.getItem('apexJournalLock') || 'null'); } catch (e) { return null; } }
+        function apexJournalHasLock() { return !!(apexJournalLock() && apexJournalLock().salt); }
+        function apexJournalUnlocked() { return !!_apexJournalKey; }
+        async function apexJournalDeriveKey(pin, saltHex) {
+            const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(String(pin)), 'PBKDF2', false, ['deriveKey']);
+            return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: _apexUnhex(saltHex), iterations: 200000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+        }
+        async function apexJournalEncrypt(text) {
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, _apexJournalKey, new TextEncoder().encode(text));
+            return { iv: _apexHex(iv), ct: _apexHex(ct) };
+        }
+        async function apexJournalDecrypt(enc) {
+            if (!_apexJournalKey || !enc || !enc.ct) return null;
+            try { return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: _apexUnhex(enc.iv) }, _apexJournalKey, _apexUnhex(enc.ct))); }
+            catch (e) { return null; }
+        }
+        async function apexJournalCacheKey(key) {
+            _apexJournalKey = key;
+            try { sessionStorage.setItem('apexJournalKeyHex', _apexHex(await crypto.subtle.exportKey('raw', key))); } catch (e) { /* noop */ }
+        }
+        async function apexJournalRestoreSession() {
+            try {
+                const hex = sessionStorage.getItem('apexJournalKeyHex');
+                if (!hex || !apexJournalHasLock()) return;
+                _apexJournalKey = await crypto.subtle.importKey('raw', _apexUnhex(hex), { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+            } catch (e) { _apexJournalKey = null; }
+        }
+        async function apexJournalSetup(pin) {
+            const salt = _apexHex(crypto.getRandomValues(new Uint8Array(16)));
+            const key = await apexJournalDeriveKey(pin, salt);
+            await apexJournalCacheKey(key);
+            const check = await apexJournalEncrypt(APEX_JOURNAL_CHECK);
+            localStorage.setItem('apexJournalLock', JSON.stringify({ v: 1, salt, check, createdAt: Date.now() }));
+            await apexJournalMigratePlaintext();
+        }
+        async function apexJournalUnlock(pin) {
+            const lock = apexJournalLock();
+            if (!lock) return false;
+            const key = await apexJournalDeriveKey(pin, lock.salt);
+            const prev = _apexJournalKey;
+            _apexJournalKey = key;
+            const ok = (await apexJournalDecrypt(lock.check)) === APEX_JOURNAL_CHECK;
+            if (!ok) { _apexJournalKey = prev; return false; }
+            await apexJournalCacheKey(key);
+            await apexJournalMigratePlaintext();
+            return true;
+        }
+        function apexJournalLockNow() {
+            _apexJournalKey = null;
+            try { sessionStorage.removeItem('apexJournalKeyHex'); } catch (e) { /* noop */ }
+            apexJournalRenderLockUI();
+        }
+        // Entries written before encryption existed are still plaintext — seal them the first
+        // time a key is available, so nothing stays readable in the store.
+        async function apexJournalMigratePlaintext() {
+            if (!_apexJournalKey) return;
+            const tracking = getTrackingData();
+            let changed = false;
+            for (const l of (tracking.dailyLogs || [])) {
+                if (l && typeof l.journal === 'string') {
+                    if (l.journal.trim()) l.journalEnc = await apexJournalEncrypt(l.journal);
+                    delete l.journal;
+                    changed = true;
+                }
+            }
+            if (changed) localStorage.setItem('trackingData', JSON.stringify(tracking));
+        }
+        async function apexJournalResetLock() {
+            if (!confirm('Reset your journal PIN?\n\nEvery journal entry is encrypted with it, so they will ALL be permanently erased. Mood, workload and the rest of each day\'s log are kept.')) return;
+            const tracking = getTrackingData();
+            (tracking.dailyLogs || []).forEach(l => { if (l) { delete l.journalEnc; delete l.journal; } });
+            localStorage.setItem('trackingData', JSON.stringify(tracking));
+            localStorage.removeItem('apexJournalLock');
+            apexJournalLockNow();
+            const ta = document.getElementById('logJournalText'); if (ta) ta.value = '';
+            loadPastLogs(tracking);
+            if (typeof fxToast === 'function') fxToast('Journal reset');
+        }
+        // One small themed modal for both "set a PIN" and "unlock". Resolves to the PIN, or null.
+        function apexJournalPinModal(mode) {
+            return new Promise(resolve => {
+                const existing = document.getElementById('journalPinOverlay'); if (existing) existing.remove();
+                const setup = mode === 'setup';
+                const div = document.createElement('div');
+                div.id = 'journalPinOverlay';
+                div.style.cssText = 'position:fixed;inset:0;z-index:9100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);padding:20px;';
+                const inputStyle = 'width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--accent-wash);color:var(--text-primary);font-family:inherit;font-size:16px;box-sizing:border-box;margin-top:8px;';
+                div.innerHTML = `<div style="background:var(--bg-primary);border:2px solid var(--border);border-radius:20px;padding:26px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.3);">
+                    <div style="font-weight:900;font-size:18px;color:var(--text-primary);">${setup ? '🔒 Set a journal PIN' : '🔒 Unlock your journal'}</div>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-top:6px;line-height:1.5;">${setup
+                        ? 'Your journal is encrypted with this PIN so only you can read it — not the AI, not anyone with your account data. There\'s no way to recover it if you forget it.'
+                        : 'Enter your journal PIN to read and write entries on this device.'}</div>
+                    <input type="password" id="journalPinInput" placeholder="${setup ? 'Choose a PIN or passphrase (4+ characters)' : 'Your journal PIN'}" autocomplete="${setup ? 'new-password' : 'current-password'}" style="${inputStyle}">
+                    ${setup ? `<input type="password" id="journalPinConfirm" placeholder="Type it again" autocomplete="new-password" style="${inputStyle}">` : ''}
+                    <div id="journalPinNotice" style="min-height:18px;font-size:12.5px;font-weight:700;color:var(--c-danger,#DC2626);margin-top:6px;"></div>
+                    <div style="display:flex;gap:10px;margin-top:12px;">
+                        <button id="journalPinCancel" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>
+                        <button id="journalPinOk" style="flex:1;padding:11px;border-radius:12px;border:none;background:var(--accent);color:var(--btn-text);font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;">${setup ? 'Encrypt my journal' : 'Unlock'}</button>
+                    </div>
+                    ${setup ? '' : '<button id="journalPinReset" style="margin-top:12px;background:none;border:none;color:var(--text-secondary);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;">Forgot it? Reset journal (erases all entries)</button>'}
+                </div>`;
+                const done = v => { div.remove(); resolve(v); };
+                div.addEventListener('click', e => { if (e.target === div) done(null); });
+                div.querySelector('#journalPinCancel').onclick = () => done(null);
+                const resetBtn = div.querySelector('#journalPinReset');
+                if (resetBtn) resetBtn.onclick = async () => { done(null); await apexJournalResetLock(); };
+                const submit = () => {
+                    const pin = div.querySelector('#journalPinInput').value;
+                    const notice = div.querySelector('#journalPinNotice');
+                    if (setup) {
+                        if (pin.length < 4) { notice.textContent = 'Use at least 4 characters.'; return; }
+                        if (pin !== div.querySelector('#journalPinConfirm').value) { notice.textContent = "Those don't match."; return; }
+                    } else if (!pin) { notice.textContent = 'Enter your PIN.'; return; }
+                    done(pin);
+                };
+                div.querySelector('#journalPinOk').onclick = submit;
+                div.querySelectorAll('input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') done(null); }));
+                document.body.appendChild(div);
+                setTimeout(() => div.querySelector('#journalPinInput').focus(), 30);
+            });
+        }
+        // Makes sure a key is in hand: sets up a PIN if none exists, or asks for it. False = user bailed.
+        async function apexJournalEnsureKey() {
+            if (apexJournalUnlocked()) return true;
+            if (!apexJournalHasLock()) {
+                const pin = await apexJournalPinModal('setup');
+                if (!pin) return false;
+                await apexJournalSetup(pin);
+                if (typeof fxToast === 'function') fxToast('🔒 Journal encrypted');
+                apexJournalRenderLockUI();
+                return true;
+            }
+            for (;;) {
+                const pin = await apexJournalPinModal('unlock');
+                if (pin === null) return false;
+                if (await apexJournalUnlock(pin)) { apexJournalRenderLockUI(); loadTodaysNotes(); loadPastLogs(getTrackingData()); return true; }
+                if (typeof fxToast === 'function') fxToast('Wrong PIN — try again');
+            }
+        }
+        function apexJournalLockBtn() {
+            if (apexJournalUnlocked()) { apexJournalLockNow(); loadPastLogs(getTrackingData()); const ta = document.getElementById('logJournalText'); if (ta) ta.value = ''; return; }
+            apexJournalEnsureKey();
+        }
+        function apexJournalRenderLockUI() {
+            const btn = document.getElementById('journalLockBtn');
+            const ta = document.getElementById('logJournalText');
+            const hasLock = apexJournalHasLock(), open = apexJournalUnlocked();
+            if (btn) btn.textContent = !hasLock ? '🔒 Set a PIN' : (open ? '🔓 Lock now' : '🔒 Unlock');
+            if (ta) {
+                const locked = hasLock && !open;
+                ta.disabled = locked;
+                ta.placeholder = locked ? 'Unlock your journal to write today\'s entry' : 'What went well today? What was hard?';
+            }
+        }
+        function apexJournalStatus(msg) {
+            const status = document.getElementById('logSaveStatus');
+            if (!status) return;
+            status.textContent = msg; status.className = 'rl-toast-error'; status.style.display = 'inline';
+            setTimeout(() => status.style.display = 'none', 4000);
+        }
+
+        async function saveDailyLog() {
             const today = new Date().toISOString().split('T')[0];
             const journal = document.getElementById('logJournalText').value.trim();
             const aiMsg = document.getElementById('logAiMessage')?.value?.trim() || '';
@@ -19951,17 +20248,13 @@ ${(s.chapters && s.chapters.length)
             const missing = [];
             if (!selectedMood) missing.push('How you feel');
             if (!selectedWorkload) missing.push('Workload');
-            if (!journal) missing.push('Your thoughts');
-            if (missing.length) {
-                const status = document.getElementById('logSaveStatus');
-                if (status) {
-                    status.textContent = '⚠ Please fill in: ' + missing.join(', ');
-                    status.className = 'rl-toast-error';
-                    status.style.display = 'inline';
-                    setTimeout(() => status.style.display = 'none', 4000);
-                }
-                return;
-            }
+            if (!journal && !(apexJournalHasLock() && !apexJournalUnlocked())) missing.push('Your thoughts');
+            if (missing.length) { apexJournalStatus('⚠ Please fill in: ' + missing.join(', ')); return; }
+
+            // The journal only ever reaches storage encrypted — get a key first (sets up the PIN
+            // on the very first save), and give up cleanly if the student cancels.
+            if (journal && !(await apexJournalEnsureKey())) { apexJournalStatus('🔒 Set your journal PIN to save your thoughts privately'); return; }
+            const journalEnc = journal ? await apexJournalEncrypt(journal) : null;
 
             const tracking = getTrackingData();
             let todayLog = tracking.dailyLogs.find(l => l.date === today);
@@ -19971,7 +20264,8 @@ ${(s.chapters && s.chapters.length)
             }
             todayLog.mood = selectedMood;
             todayLog.workload = selectedWorkload;
-            todayLog.journal = journal;
+            if (journalEnc) todayLog.journalEnc = journalEnc;
+            delete todayLog.journal;
             todayLog.aiMessage = aiMsg;
             todayLog.hoursStudied = todayLog.hoursStudied || 0;
             localStorage.setItem('trackingData', JSON.stringify(tracking));
@@ -20131,14 +20425,16 @@ ${(s.chapters && s.chapters.length)
             if (!display.length) { list.innerHTML = '<p style="color:var(--text-secondary);font-size:14px;">No entries yet. Save today\'s log to start your diary.</p>'; return; }
             list.innerHTML = display.map(l => {
                 const moodColor = RL_MOOD_COLOR[l.mood] || 'var(--text-secondary)';
-                const journalPreview = l.journal ? l.journal.replace(/"/g, '&quot;') : '(no notes today)';
+                // Encrypted entries are filled in below once decrypted; a locked journal shows 🔒.
+                const hasEntry = !!(l.journalEnc || l.journal);
+                const journalPreview = !hasEntry ? '(no notes today)' : (apexJournalUnlocked() || l.journal ? '…' : '🔒 Locked — unlock your journal to read');
                 return `<div class="rl-entry-row" onclick="openJournalEntryDetail('${l.date}')" style="cursor:pointer;">
                     <div style="min-width:0;">
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
                             <span style="font-weight:800;font-size:14px;color:var(--text-primary);">${apexFmtLogDate(l.date)}</span>
                             <span class="rl-mood-tag" style="background:${moodColor}1A;color:${moodColor};">${l.mood || '—'}</span>
                         </div>
-                        <div style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${journalPreview}</div>
+                        <div data-journal-preview="${l.date}" style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${journalPreview}</div>
                     </div>
                     <div style="display:flex;gap:10px;flex-shrink:0;">
                         <button class="rl-star-btn" onclick="event.stopPropagation();toggleStarLog('${l.date}')" style="color:${l.starred ? 'var(--c-warning)' : 'var(--border-strong)'};">★</button>
@@ -20146,6 +20442,12 @@ ${(s.chapters && s.chapters.length)
                     </div>
                 </div>`;
             }).join('');
+            display.forEach(async l => {
+                const el = list.querySelector(`[data-journal-preview="${l.date}"]`);
+                if (!el) return;
+                const text = l.journal || (l.journalEnc && apexJournalUnlocked() ? await apexJournalDecrypt(l.journalEnc) : null);
+                if (text) el.textContent = text;
+            });
         }
 
         // Full-text read-only review of one past journal entry — the list above only ever
@@ -20176,7 +20478,7 @@ ${(s.chapters && s.chapters.length)
                     </div>
                     <button onclick="document.getElementById('journalEntryOverlay').remove()" style="background:none;border:none;font-size:22px;line-height:1;color:var(--text-secondary);cursor:pointer;padding:0;">&times;</button>
                 </div>
-                <div style="overflow-y:auto;font-size:14px;line-height:1.65;color:var(--text-primary);white-space:pre-wrap;flex:1;padding-right:4px;">${log.journal ? log.journal.replace(/</g, '&lt;') : '(no notes that day)'}</div>
+                <div id="journalEntryBody" style="overflow-y:auto;font-size:14px;line-height:1.65;color:var(--text-primary);white-space:pre-wrap;flex:1;padding-right:4px;">${log.journal ? log.journal.replace(/</g, '&lt;') : (log.journalEnc ? (apexJournalUnlocked() ? '…' : '🔒 Locked — unlock your journal from the Journal section to read this.') : '(no notes that day)')}</div>
                 <div style="display:flex;gap:10px;margin-top:18px;flex-shrink:0;">
                     <button onclick="toggleStarLog('${log.date}');openJournalEntryDetail('${log.date}');" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-secondary);color:${log.starred ? '#D97706' : 'var(--text-secondary)'};font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">★ ${log.starred ? 'Starred' : 'Star'}</button>
                     <button onclick="document.getElementById('journalEntryOverlay').remove();deleteLog('${log.date}');" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-secondary);color:var(--c-danger,#DC2626);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Delete</button>
@@ -20184,6 +20486,12 @@ ${(s.chapters && s.chapters.length)
             </div>`;
             div.addEventListener('click', (e) => { if (e.target === div) div.remove(); });
             document.body.appendChild(div);
+            if (log.journalEnc && apexJournalUnlocked()) {
+                apexJournalDecrypt(log.journalEnc).then(text => {
+                    const body = div.querySelector('#journalEntryBody');
+                    if (body) body.textContent = text || "(couldn't decrypt this entry)";
+                });
+            }
         }
         function toggleStarLog(date) {
             const tracking = getTrackingData();
@@ -20203,8 +20511,10 @@ ${(s.chapters && s.chapters.length)
             const tracking = getTrackingData();
             const today = new Date().toISOString().split('T')[0];
             const todayLog = tracking.dailyLogs.find(l => l.date === today);
+            apexJournalRenderLockUI();
             if (todayLog) {
                 if (todayLog.journal) document.getElementById('logJournalText').value = todayLog.journal;
+                else if (todayLog.journalEnc && apexJournalUnlocked()) apexJournalDecrypt(todayLog.journalEnc).then(t => { const ta = document.getElementById('logJournalText'); if (ta && t && !ta.value) ta.value = t; });
                 if (todayLog.aiMessage) document.getElementById('logAiMessage').value = todayLog.aiMessage;
                 if (todayLog.mood) {
                     document.querySelectorAll('[data-mood]').forEach(b => {
@@ -22752,6 +23062,10 @@ Return ONLY JSON:
         // ========== PAGE INITIALIZATION ==========
         // Initialize pages on load - ensure only homePage or onboardingPage is visible
         window.addEventListener('DOMContentLoaded', function() {
+            // A scheduled account deletion survives the app being closed — finish or resume it.
+            if (typeof apexCheckPendingDeletion === 'function') apexCheckPendingDeletion();
+            // Journal stays unlocked across a reload within the same tab (sessionStorage key cache).
+            if (typeof apexJournalRestoreSession === 'function') apexJournalRestoreSession().then(() => { if (typeof apexJournalRenderLockUI === 'function') apexJournalRenderLockUI(); });
 
             const hasStudentData = localStorage.getItem('studentData');
             
@@ -27645,7 +27959,21 @@ Return ONLY JSON:
             if (!menu) return;
             const hostMenu = document.getElementById('commHostMenu');
             if (hostMenu) hostMenu.style.display = 'none';
+            // "Add People" only inside a group this student created — same rule as the ⋮ host menu.
+            const addPeople = document.getElementById('commPlusAddPeople');
+            if (addPeople) {
+                const meta = _apexCommGroupsMeta[_apexCommActiveChat];
+                const isMyGroup = !!(meta && meta.type === 'group' && meta.owner && meta.owner === apexCommunityUserKey());
+                addPeople.style.display = isMyGroup ? '' : 'none';
+            }
             menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+        }
+        function apexCommunityAddPeopleFromPlus() {
+            const menu = document.getElementById('commThreadPlusMenu');
+            if (menu) menu.style.display = 'none';
+            // Resolved at call time on purpose: the v2 layer swaps this global for its searchable
+            // "Add a member" picker once it loads, and the ⋮ host menu goes through the same path.
+            window.apexCommunityOpenAddMemberSearch();
         }
         function apexCommunityAskQuestion() {
             document.getElementById('commThreadPlusMenu').style.display = 'none';
@@ -37963,7 +38291,7 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
             let gained = 0; const fresh = [];
             const add = (k, a, r, d) => { const g = awardOnce(t, k, a, r, d || d0); if (g) { gained += g; fresh.push({ amount: g, reason: r }); } };
             add('open_' + d0, 5, 'Showed up today');
-            (t.dailyLogs || []).forEach(l => { if (l && l.date && (l.mood || l.journal)) add('log_' + l.date, 10, 'Daily log saved', l.date); });
+            (t.dailyLogs || []).forEach(l => { if (l && l.date && (l.mood || l.journal || l.journalEnc)) add('log_' + l.date, 10, 'Daily log saved', l.date); });
             lsJson('quizHistory', []).forEach(q => { if (!q || !q.date) return; add('quiz_' + q.date, 10 + bonus(q.pct), 'Quiz · ' + (q.subject || '') + ' ' + Math.round(+q.pct || 0) + '%', String(q.date).slice(0, 10)); });
             const seen = {};
             (t.practiceResults || []).forEach(p => { if (!p || !p.date) return; const base = 'prac_' + String(p.date).slice(0, 10) + '_' + p.subject + '_' + p.score + '/' + p.total; seen[base] = (seen[base] || 0) + 1; add(base + '_' + seen[base], 10 + bonus(p.pct), 'Practice · ' + (p.subject || '') + ' ' + Math.round(+p.pct || 0) + '%', String(p.date).slice(0, 10)); });

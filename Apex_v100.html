@@ -18,9 +18,10 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Fonts load without blocking first paint (text shows in the fallback font, swaps when ready). -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <!-- V2:FONT -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <!-- /V2:FONT -->
     <style>
         * {
@@ -8298,9 +8299,13 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
 
         /* /V2:CSS */
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+    <!-- KaTeX is only used when a question with maths is rendered (inside functions, guarded by
+         `if (window.renderMathInElement)`), so nothing here may block the page: the scripts are
+         deferred and the stylesheet applies once it has loaded instead of holding up first paint. -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" media="print" onload="this.media='all'">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 </head>
 <body>
     <!-- ========== ONBOARDING PAGE ========== -->
@@ -23139,6 +23144,33 @@ Return ONLY JSON:
             initExamDateDropdowns();
 
         });
+
+        // ═══ Offline-first app shell (sw.js) ═══
+        // Registered after `load` so it never competes with the first paint. From the second
+        // visit on, the service worker serves this page and its scripts from the device's cache
+        // (instant, works offline) and checks the server in the background; when a newer version
+        // has been deployed it posts a message and the banner below offers a one-tap reload.
+        function apexShowUpdateBanner() {
+            if (document.getElementById('apexUpdateBanner')) return;
+            const b = document.createElement('div');
+            b.id = 'apexUpdateBanner';
+            b.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:999px;background:var(--text-primary,#1A1135);color:var(--bg-primary,#fff);font:700 13px/1.2 inherit;box-shadow:0 10px 30px rgba(0,0,0,0.25);';
+            b.innerHTML = '<span>A new version of Apex is ready</span><button onclick="location.reload()" style="background:var(--accent,#6B17E0);color:#fff;border:none;padding:8px 14px;border-radius:999px;font:800 13px inherit;cursor:pointer;">Reload</button><button onclick="this.parentNode.remove()" title="Later" style="background:none;border:none;color:inherit;opacity:.7;font-size:18px;line-height:1;cursor:pointer;padding:0 2px;">&times;</button>';
+            document.body.appendChild(b);
+        }
+        if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+            navigator.serviceWorker.addEventListener('message', (e) => {
+                if (e.data && e.data.type === 'apex-update-available') apexShowUpdateBanner();
+            });
+            // Ask the worker for an update check once this page is fully up (and again whenever
+            // the tab comes back into view) — a reply to this page can't be lost the way a message
+            // posted while the page was still loading can.
+            const apexAskForUpdate = () => { const c = navigator.serviceWorker.controller; if (c) c.postMessage({ type: 'apex-check-update' }); };
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(() => apexAskForUpdate()).catch(e => console.warn('[sw] register failed', e));
+            });
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') apexAskForUpdate(); });
+        }
 
         // ========== AI NOTES STATE ==========
         const notesState = {

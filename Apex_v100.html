@@ -10067,6 +10067,17 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                         <button class="rl-btn-primary" style="white-space:nowrap;" onclick="apexOpenThemeSettings()">🎨 Customize Theme</button>
                     </div>
 
+                    <div class="rl-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                        <div>
+                            <div class="rl-eyebrow" style="margin-bottom:4px;">Quick actions</div>
+                            <div style="font-size:13px;color:var(--text-secondary);">A floating ⌘K / Ctrl+K button for jumping between pages. Off by default.</div>
+                        </div>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text-primary);cursor:pointer;white-space:nowrap;">
+                            <input type="checkbox" id="settingsQuickActions" onchange="apexSetQuickActions(this.checked)" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer;">
+                            Show button
+                        </label>
+                    </div>
+
                     <div class="rl-card">
                         <div class="rl-eyebrow" style="margin-bottom:4px;">Google Calendar</div>
                         <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Connect your Google account so your school's timetable shows up in Week View, styled like the rest of the app. Read-only and one-way — Apex never edits your calendar, and this doesn't change your AI-generated plan.</div>
@@ -19293,6 +19304,8 @@ ${(s.chapters && s.chapters.length)
             if (typeof gcalRenderSettingsPanel === 'function') gcalRenderSettingsPanel();
             const acctEl = document.getElementById('settingsAccountName');
             if (acctEl) acctEl.textContent = apexUserKey() || '—';
+            const qaEl = document.getElementById('settingsQuickActions');
+            if (qaEl) qaEl.checked = localStorage.getItem('apexQuickActions') === 'true';
             apexCheckPendingDeletion();
             apexRenderDeleteState();
         }
@@ -23138,6 +23151,12 @@ Return ONLY JSON:
                 { const _el18 = document.getElementById('homePage'); if (_el18) _el18.classList.remove('active'); }
                 const splash = document.getElementById('apexSplash');
                 if (splash) splash.style.display = 'none';
+                // Arriving from the boot page (index.html), which already showed the Welcome screen
+                // while this file downloaded: skip straight to the screen they tapped there.
+                let start = null;
+                try { start = sessionStorage.getItem('apexStart'); sessionStorage.removeItem('apexStart'); } catch (e) { /* noop */ }
+                if (start === 'signup') saveApiKeyAndStart();
+                else if (start === 'signin') showAccountScreen();
             }
             
             applyDarkModeFromStorage();
@@ -34600,6 +34619,15 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
             { ic: '🌗', label: 'Toggle dark mode', hint: '', run: () => { if (typeof toggleDarkMode === 'function') toggleDarkMode(null); } },
         ];
         let kSel = 0, kItems = [];
+        // Off by default; Settings → "Quick actions" turns the ⌘K pill + shortcut on.
+        const quickActionsOn = () => safe(() => localStorage.getItem('apexQuickActions') === 'true', false);
+        window.apexSetQuickActions = function (on) {
+            try { localStorage.setItem('apexQuickActions', on ? 'true' : 'false'); } catch (e) {}
+            if (on) buildPalette();
+            const fab = document.querySelector('.v2-kbar-fab');
+            if (fab) fab.style.display = on ? '' : 'none';
+            if (!on) closePalette();
+        };
         function buildPalette() {
             if ($('v2KBar')) return;
             const w = el('div', 'v2-kbar-wrap'); w.id = 'v2KBar';
@@ -34627,7 +34655,7 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
         function closePalette() { const w = $('v2KBar'); if (w) w.classList.remove('open'); }
         const typing = () => { const a = document.activeElement; return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable); };
         document.addEventListener('keydown', (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); const w = $('v2KBar'); (w && w.classList.contains('open')) ? closePalette() : openPalette(); return; }
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { if (!quickActionsOn()) return; e.preventDefault(); const w = $('v2KBar'); (w && w.classList.contains('open')) ? closePalette() : openPalette(); return; }
             if (e.key === 'Escape') { closePalette(); return; }
             const homeActive = $('homePage') && $('homePage').classList.contains('active');
             if (!homeActive || typing() || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -34654,7 +34682,7 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
             wrapFn('saveDailyLog', () => { const r = reconcilePoints(); if (r.gained) toast('+' + r.gained + ' pts · ' + r.fresh[0].reason); syncStreak(); });
             wrapFn('markSession', () => { if (isHomeVisible()) syncHome(); else syncStreak(); });
             wrapFn('apexCommMarkRead', () => { _commAt = 0; });
-            buildPalette();
+            if (quickActionsOn()) buildPalette();
             try { syncHome(); } catch (e) { console.warn('[v2] syncHome', e); }
             syncHomeFlag();
             window.addEventListener('storage', (e) => { if (e.key === 'trackingData') syncStreak(); });

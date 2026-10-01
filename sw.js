@@ -6,7 +6,10 @@
    files and the two static CDNs (fonts, KaTeX). */
 const VERSION = 'apex-shell-v1';
 const SHELL_KEY = './Apex_v100.html';
-const SHELL = [SHELL_KEY, './index.html'];
+// Precached at install: only the tiny boot page. Apex_v100.html itself is cached by the boot
+// page's warm-up download (or by serveShell on the first direct open) — never fetched twice.
+const SHELL = ['./index.html'];
+const KEEP = ['/index.html', '/Apex_v100.html'];
 const CDN_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com'];
 
 self.addEventListener('install', (e) => {
@@ -25,8 +28,7 @@ self.addEventListener('activate', (e) => {
 // load (the one the Reload banner triggers) can't pair the new page with stale modules/data.
 async function purgeNonShell(cache) {
   const keys = await cache.keys();
-  const keep = SHELL.map((s) => s.replace(/^\./, ''));
-  await Promise.all(keys.filter((r) => !keep.some((k) => r.url.endsWith(k))).map((r) => cache.delete(r)));
+  await Promise.all(keys.filter((r) => !KEEP.some((k) => r.url.endsWith(k))).map((r) => cache.delete(r)));
 }
 
 // Compare the server's Apex_v100.html with the cached one (conditional request — a cheap 304
@@ -98,9 +100,12 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
 
-  // Opening the app (/, index.html or Apex_v100.html): serve the shell from cache, check the
-  // server in the background. Serving the app for "/" directly also skips index.html's redirect hop.
-  if (req.mode === 'navigate' && sameOrigin && /(\/|\/index\.html|\/Apex_v100\.html)$/.test(url.pathname)) { e.respondWith(serveShell(e)); return; }
+  if (req.mode === 'navigate' && sameOrigin) {
+    // The app: serve from cache, check the server in the background.
+    if (url.pathname.endsWith('/Apex_v100.html')) { e.respondWith(serveShell(e)); return; }
+    // The boot page (/ or /index.html): instant from cache, refreshed behind the scenes.
+    if (/\/(index\.html)?$/.test(url.pathname)) { e.respondWith(staleWhileRevalidate(e)); return; }
+  }
 
   // This site's own scripts/data (ai-logic modules, apex-data chunks, the notes bundle; sw.js
   // itself excluded): cached after first use, refreshed in the background on later uses.

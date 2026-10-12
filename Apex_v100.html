@@ -21199,6 +21199,11 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         // apexUserKey: the signed-in account's Firebase key — just the normalized nickname
         // (apexTryNicknameSignIn/apexClaimNickname already normalize to /^[a-z0-9_]{1,24}$/).
         function apexUserKey() { return localStorage.getItem('apexNickname') || null; }
+        // Only these accounts can sign in. Names are compared after apexNicknameKey(), so the
+        // full-width "Ｆｒａｇｇｙ" becomes "fraggy" instead of being stripped to nothing.
+        const APEX_ALLOWED_NICKNAMES = ['thedarkmagebs24', 'fraggy', 'adib0y'];
+        function apexNicknameKey(raw) { return String(raw || '').normalize('NFKC').toLowerCase().replace(/[^a-z0-9_]/g, ''); }
+        function apexIsAllowedNickname(key) { return APEX_ALLOWED_NICKNAMES.indexOf(key) !== -1; }
         // isPrimaryDevice: true only on the one device designated to generate the timetable.
         function isPrimaryDevice() {
             const mine = apexDeviceId();
@@ -22639,10 +22644,11 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             const notice = document.getElementById('chooseNicknameNotice');
             const btn = document.getElementById('chooseNicknameBtn');
             const raw = input ? input.value.trim() : '';
-            const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            const key = apexNicknameKey(raw);
             const password = pwInput ? pwInput.value : '';
             const passwordConfirm = pwConfirmInput ? pwConfirmInput.value : '';
             if (!key || key.length < 2) { if (notice) notice.textContent = 'Pick a nickname at least 2 characters long.'; return; }
+            if (!apexIsAllowedNickname(key)) { if (notice) notice.textContent = 'Sign-in is limited to approved accounts.'; return; }
             if (!password || password.length < 6) { if (notice) notice.textContent = 'Password must be at least 6 characters.'; return; }
             if (password !== passwordConfirm) { if (notice) notice.textContent = "Passwords don't match."; return; }
 
@@ -22718,9 +22724,10 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
             const notice = document.getElementById('accountNicknameNotice');
             const btn = document.querySelector('#stepAccount .ds-btn-primary');
             const raw = input ? input.value.trim() : '';
-            const key = raw.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            const key = apexNicknameKey(raw);
             const password = pwInput ? pwInput.value : '';
             if (!key) { if (notice) notice.textContent = 'Enter a nickname first.'; return; }
+            if (!apexIsAllowedNickname(key)) { if (notice) notice.textContent = 'Sign-in is limited to approved accounts.'; return; }
             if (!password) { if (notice) notice.textContent = 'Enter your password.'; return; }
 
             if (notice) notice.textContent = '';
@@ -30749,6 +30756,8 @@ Return ONLY JSON:
         // Initialize pages on load - ensure only homePage or onboardingPage is visible
         window.addEventListener('DOMContentLoaded', function() {
 
+            // A session left on this device for a name that is no longer approved is cleared before anything loads.
+            { const _nk = localStorage.getItem('apexNickname'); if (_nk && !apexIsAllowedNickname(_nk)) apexClearLocalUserState(); }
             const hasStudentData = localStorage.getItem('studentData');
             
             if (hasStudentData) {

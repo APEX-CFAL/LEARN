@@ -21204,6 +21204,26 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
         const APEX_ALLOWED_NICKNAMES = ['thedarkmagebs24', 'fraggy', 'adib0y'];
         function apexNicknameKey(raw) { return String(raw || '').normalize('NFKC').toLowerCase().replace(/[^a-z0-9_]/g, ''); }
         function apexIsAllowedNickname(key) { return APEX_ALLOWED_NICKNAMES.indexOf(key) !== -1; }
+        // Approved accounts are topped up to these balances on every sign-in. Only raises, never lowers,
+        // so spending is unaffected.
+        const APEX_ALLOWED_FLOOR = { points: 200000, gems: 20000 };
+        function apexApplyAllowedGrant() {
+            const key = apexUserKey();
+            if (!key || !apexIsAllowedNickname(key)) return;
+            try {
+                // Logged as a points entry (grant_…) — the points guard only accepts totals that move by logged entries.
+                const t = getTrackingData();
+                const need = APEX_ALLOWED_FLOOR.points - (t.totalPoints || 0);
+                if (need > 0) {
+                    const day = new Date().toISOString().split('T')[0];
+                    t.pointsHistory = t.pointsHistory || [];
+                    t.pointsHistory.push({ date: day, amount: need, reason: 'Approved account balance', key: 'grant_' + day });
+                    t.totalPoints = (t.totalPoints || 0) + need;
+                    saveTrackingData(t);
+                }
+            } catch (e) { console.warn('[grant] points', e); }
+            document.dispatchEvent(new CustomEvent('apex:gems-floor', { detail: { n: APEX_ALLOWED_FLOOR.gems } }));
+        }
         // isPrimaryDevice: true only on the one device designated to generate the timetable.
         function isPrimaryDevice() {
             const mine = apexDeviceId();
@@ -22695,6 +22715,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                 localStorage.setItem('apexNickname', key);
                 localStorage.setItem('apexPrimaryDeviceId', deviceId);
                 apexRegisterDirectory(key);
+                apexApplyAllowedGrant();
                 hideChooseNicknameScreen();
                 goToProgramChoice();
             } catch (e) {
@@ -22764,6 +22785,7 @@ body.dark-mode .flc-toast{background:var(--c-bg-3); color:var(--c-text-1); borde
                 apexRegisterDirectory(key);
                 if (meta.primaryDeviceId !== myDeviceId) await apexFb.patch('apex/users/' + key + '/meta', { primaryDeviceId: myDeviceId });
                 await apexHydrateFromCloud();
+                apexApplyAllowedGrant();
                 showHomePage();
                 await apexAutoGenerateIfNeeded();
             } catch (e) {
@@ -30772,6 +30794,7 @@ Return ONLY JSON:
                 // async IIFE so generation sees whatever the pull just synced down, not stale data.
                 (async () => {
                     if (typeof apexPullRemoteChanges === 'function') await apexPullRemoteChanges();
+                    apexApplyAllowedGrant();
                     if (typeof apexAutoGenerateIfNeeded === 'function') await apexAutoGenerateIfNeeded();
                     // v75: check for pending Community group invites / DM requests once remote sync
                     // has landed, and pop up one at a time if any exist.
@@ -47198,7 +47221,7 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
                 const c = left.get(k) || 0; if (c > 0) { left.set(k, c - 1); keep.push(h); return; }
                 // 2026-10-10: the Arcade's gem converter writes arc_cv_<gems>_<time> — it must be exactly that row of the table
                 const cv = /^arc_cv_(\d+)_/.exec(key); const CV = { 10: 200, 50: 1500, 100: 4000, 250: 15000, 500: 40000, 1000: 100000 };
-                const cap = cv ? (CV[cv[1]] === amt ? amt : -1) : /^arc_out_/.test(key) ? lastBet * 15 : ENTRY_CAP;
+                const cap = cv ? (CV[cv[1]] === amt ? amt : -1) : /^arc_out_/.test(key) ? lastBet * 15 : /^grant_/.test(key) ? (apexIsAllowedNickname(apexUserKey() || '') ? APEX_ALLOWED_FLOOR.points : -1) : ENTRY_CAP;
                 if (amt > cap) { out.push({ date: today(), amount: amt, reason: String(h.reason || '').slice(0, 60), key: key.slice(0, 40) }); return; }
                 added += amt; keep.push(h);
             });
@@ -53777,6 +53800,9 @@ window.PPC = { enter, switchExam, setTab, openTest, backToList, startTest, selec
         setInterval(() => { if ($('v2Home') && $('v2Home').offsetParent !== null) paintAll(); else if ($('commBoard') && !$('commBoard').hidden && $('commBoard').offsetParent) safe(paintBoard); }, 60000);
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { safe(seasonCheck); safe(chestCheck); paintAll(); } });
         addEventListener('storage', (e) => { if (e.key === 'apexEco') { S = lsJson('apexEco', S) || S; snapCache = null; paintAll(); applyLook(); } });
+        // Account grants from the app (apexApplyAllowedGrant): raise the gem balance to at least n. Goes through this
+        // module's own state so the next save doesn't write the old balance back.
+        document.addEventListener('apex:gems-floor', (e) => { const n = Math.floor(+(e.detail && e.detail.n) || 0); if (n > (S.gems || 0)) { S.gems = n; save(); paintAll(); } });
         const wrapSec = () => { const o = window.showSection; if (typeof o !== 'function' || o.__eco) return; window.showSection = function () { const r = o.apply(this, arguments); if (arguments[0] === 'home') setTimeout(paintAll, 60); else if (arguments[0] === 'community') setTimeout(() => safe(() => paintBoard(true)), 60); return r; }; window.showSection.__eco = true; };
         wrapSec(); setTimeout(wrapSec, 1500);
         let heroTm = 0; new MutationObserver(() => { const h = $('v2Hero'); if (h && !h.querySelector(':scope > .eco-hero-badges')) { clearTimeout(heroTm); heroTm = setTimeout(() => safe(paintHero), 120); } }).observe(document.body, { childList: true, subtree: true });
